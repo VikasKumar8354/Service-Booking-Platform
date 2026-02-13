@@ -90,25 +90,44 @@ public class BookingService {
     }
 
     @Transactional
-    public ApiResponse<Booking> updateStatus(Long bookingId, BookingStatus status) {
+    public ApiResponse<Booking> updateStatus(Long bookingId, BookingStatus newStatus) {
+
         Booking booking = bookingRepository.findById(bookingId)
                 .orElseThrow(() -> new ResourceNotFoundException("Booking not found"));
 
-        booking.setStatus(status);
+        BookingStatus oldStatus = booking.getStatus();
+
+        // Update booking status
+        booking.setStatus(newStatus);
+
         booking = bookingRepository.save(booking);
 
-        notificationService.createNotification(booking.getCustomer().getUser().getId(), 
-            "Booking Status Updated", "Your booking status is now: " + status);
+        notificationService.createNotification(
+                booking.getCustomer().getUser().getId(),
+                "Booking Status Updated",
+                "Your booking status is now: " + newStatus
+        );
 
-        if (status == BookingStatus.COMPLETED && booking.getProvider() != null) {
+
+        if (newStatus == BookingStatus.COMPLETED &&
+                oldStatus != BookingStatus.COMPLETED &&
+                booking.getProvider() != null) {
+
             ProviderProfile provider = booking.getProvider();
-            provider.setCompletedJobs(provider.getCompletedJobs() + 1);
-            provider.setTotalEarnings(provider.getTotalEarnings().add(booking.getAmount()));
+
+            // Safe null handling
+            Integer jobs = provider.getCompletedJobs() == null ? 0 : provider.getCompletedJobs();
+            BigDecimal earnings = provider.getTotalEarnings() == null ? BigDecimal.ZERO : provider.getTotalEarnings();
+
+            provider.setCompletedJobs(jobs + 1);
+            provider.setTotalEarnings(earnings.add(booking.getAmount()));
+
             providerProfileRepository.save(provider);
         }
 
         return ApiResponse.success("Booking status updated successfully", booking);
     }
+
 
     public ApiResponse<PageResponse<Booking>> getCustomerBookings(int page, int size) {
         User currentUser = userService.getCurrentUser();

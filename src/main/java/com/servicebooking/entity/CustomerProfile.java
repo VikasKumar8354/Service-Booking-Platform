@@ -11,6 +11,7 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @AllArgsConstructor
 public class CustomerProfile {
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
@@ -20,5 +21,12 @@ public class CustomerProfile {
     private User user;
 
     private String email;
-    private String profileImage;
+
+    // ✅ BLOB image storage
+    @Lob
+    @Column(name = "profile_image_data", columnDefinition = "LONGBLOB")
+    private byte[] profileImageData;
+
+    private String imageName;
+    private String imageType;
 }

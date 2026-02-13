@@ -2,6 +2,7 @@ package com.servicebooking.service;
 
 import com.servicebooking.dto.response.ApiResponse;
 import com.servicebooking.dto.response.PageResponse;
+import com.servicebooking.dto.response.ProviderProfileResponseDTO;
 import com.servicebooking.entity.ProviderProfile;
 import com.servicebooking.entity.User;
 import com.servicebooking.enums.ProviderStatus;
@@ -12,8 +13,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-
-import java.util.Map;
+import org.springframework.web.multipart.MultipartFile;
 
 @Service
 public class ProviderService {
@@ -27,72 +27,148 @@ public class ProviderService {
     @Autowired
     private NotificationService notificationService;
 
+
+    // ✅ BLOB upload version
     @Transactional
-    public ApiResponse<ProviderProfile> updateProfile(Map<String, String> updates) {
+    public ApiResponse<ProviderProfileResponseDTO> updateProfile(
+            MultipartFile documentFile,
+            String selectedServices) {
+
         User currentUser = userService.getCurrentUser();
+
         ProviderProfile provider = providerRepository.findByUser(currentUser)
                 .orElseThrow(() -> new ResourceNotFoundException("Provider profile not found"));
 
-        if (updates.containsKey("documents")) provider.setDocuments(updates.get("documents"));
-        if (updates.containsKey("selectedServices")) provider.setSelectedServices(updates.get("selectedServices"));
+        try {
+            if (documentFile != null && !documentFile.isEmpty()) {
 
-        provider = providerRepository.save(provider);
-        return ApiResponse.success("Profile updated successfully", provider);
+                String type = documentFile.getContentType();
+
+                if (type == null || !(type.equalsIgnoreCase("application/pdf")
+                        || type.equalsIgnoreCase("image/jpeg")
+                        || type.equalsIgnoreCase("image/png"))) {
+                    throw new RuntimeException("Only PDF/JPG/PNG allowed");
+                }
+
+                provider.setDocumentData(documentFile.getBytes());
+                provider.setDocumentType(type);
+                provider.setDocumentName(documentFile.getOriginalFilename());
+            }
+
+        } catch (Exception e) {
+            throw new RuntimeException("Upload failed");
+        }
+
+        if (selectedServices != null) {
+            provider.setSelectedServices(selectedServices);
+        }
+
+        providerRepository.save(provider);
+
+        return ApiResponse.success(
+                "Profile updated successfully",
+                toDTO(provider)
+        );
     }
 
+
+
+    // ✅ download helper
+    public ProviderProfile getProviderDocument() {
+        User user = userService.getCurrentUser();
+        return providerRepository.findByUser(user)
+                .orElseThrow(() -> new ResourceNotFoundException("Provider profile not found"));
+    }
+
+
+    // ===== YOUR EXISTING METHODS (unchanged) =====
+
     @Transactional
-    public ApiResponse<ProviderProfile> updateStatus(ProviderStatus status) {
-        User currentUser = userService.getCurrentUser();
-        ProviderProfile provider = providerRepository.findByUser(currentUser)
+    public ApiResponse<ProviderProfileResponseDTO> updateStatus(ProviderStatus status) {
+
+        User user = userService.getCurrentUser();
+
+        ProviderProfile provider = providerRepository.findByUser(user)
                 .orElseThrow(() -> new ResourceNotFoundException("Provider profile not found"));
 
         provider.setStatus(status);
-        provider = providerRepository.save(provider);
 
-        return ApiResponse.success("Status updated to " + status, provider);
+        providerRepository.save(provider);
+
+        return ApiResponse.success(
+                "Status updated",
+                toDTO(provider)
+        );
     }
+
 
     @Transactional
-    public ApiResponse<ProviderProfile> approveProvider(Long providerId) {
-        ProviderProfile provider = providerRepository.findById(providerId)
+    public ApiResponse<ProviderProfileResponseDTO> approveProvider(Long id) {
+
+        ProviderProfile p = providerRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Provider not found"));
 
-        provider.setStatus(ProviderStatus.APPROVED);
-        provider = providerRepository.save(provider);
+        p.setStatus(ProviderStatus.APPROVED);
+        providerRepository.save(p);
 
-        notificationService.createNotification(provider.getUser().getId(), 
-            "Application Approved", "Your provider application has been approved");
-
-        return ApiResponse.success("Provider approved successfully", provider);
-    }
-
-    @Transactional
-    public ApiResponse<ProviderProfile> rejectProvider(Long providerId) {
-        ProviderProfile provider = providerRepository.findById(providerId)
-                .orElseThrow(() -> new ResourceNotFoundException("Provider not found"));
-
-        provider.setStatus(ProviderStatus.REJECTED);
-        provider = providerRepository.save(provider);
-
-        notificationService.createNotification(provider.getUser().getId(), 
-            "Application Rejected", "Your provider application has been rejected");
-
-        return ApiResponse.success("Provider rejected", provider);
-    }
-
-    public ApiResponse<PageResponse<ProviderProfile>> getPendingProviders(int page, int size) {
-        Page<ProviderProfile> providerPage = providerRepository.findByStatus(
-            ProviderStatus.PENDING_APPROVAL, PageRequest.of(page, size));
-
-        PageResponse<ProviderProfile> response = new PageResponse<>(
-                providerPage.getContent(),
-                providerPage.getNumber(),
-                providerPage.getSize(),
-                providerPage.getTotalElements(),
-                providerPage.getTotalPages(),
-                providerPage.isLast()
+        notificationService.createNotification(
+                p.getUser().getId(),
+                "Approved",
+                "Your provider application is approved"
         );
 
-        return ApiResponse.success("Pending providers fetched", response);
+        return ApiResponse.success("Approved", toDTO(p));
     }
+
+
+    @Transactional
+    public ApiResponse<ProviderProfileResponseDTO> rejectProvider(Long id) {
+
+        ProviderProfile p = providerRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Provider not found"));
+
+        p.setStatus(ProviderStatus.REJECTED);
+        providerRepository.save(p);
+
+        notificationService.createNotification(
+                p.getUser().getId(),
+                "Rejected",
+                "Your provider application rejected"
+        );
+
+        return ApiResponse.success("Rejected", toDTO(p));
+    }
+
+
+    public ApiResponse<PageResponse<ProviderProfileResponseDTO>> getPendingProviders(int page, int size) {
+
+        Page<ProviderProfile> p = providerRepository.findByStatus(
+                ProviderStatus.PENDING_APPROVAL,
+                PageRequest.of(page, size));
+
+        PageResponse<ProviderProfileResponseDTO> response =
+                new PageResponse<>(
+                        p.getContent().stream().map(this::toDTO).toList(),
+                        p.getNumber(),
+                        p.getSize(),
+                        p.getTotalElements(),
+                        p.getTotalPages(),
+                        p.isLast()
+                );
+
+        return ApiResponse.success("Fetched", response);
+    }
+
+    private ProviderProfileResponseDTO toDTO(ProviderProfile p) {
+        return new ProviderProfileResponseDTO(
+                p.getId(),
+                p.getSelectedServices(),
+                p.getStatus(),
+                p.getTotalEarnings(),
+                p.getCompletedJobs(),
+                p.getRating(),
+                p.getDocumentData() != null
+        );
+    }
+
 }

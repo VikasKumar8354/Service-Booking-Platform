@@ -55,9 +55,18 @@ public class SecurityConfig {
                         .requestMatchers("/api/auth/**").permitAll()
                         .requestMatchers("/swagger-ui/**", "/v3/api-docs/**", "/swagger-ui.html").permitAll()
                         .requestMatchers("/h2-console/**").permitAll()
-                        .requestMatchers("/api/admin/**").hasRole("ADMIN")
+
+                        // ✅ ADMIN endpoints first
+                        .requestMatchers("/api/provider/*/approve").hasRole("ADMIN")
+                        .requestMatchers("/api/provider/*/reject").hasRole("ADMIN")
+                        .requestMatchers("/api/provider/pending").hasRole("ADMIN")
+
+                        // ✅ Provider endpoints
                         .requestMatchers("/api/provider/**").hasRole("PROVIDER")
+
+                        .requestMatchers("/api/admin/**").hasRole("ADMIN")
                         .requestMatchers("/api/customer/**").hasRole("CUSTOMER")
+
                         .anyRequest().authenticated()
                 );
 

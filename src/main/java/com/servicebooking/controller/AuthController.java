@@ -4,51 +4,65 @@ import com.servicebooking.dto.request.*;
 import com.servicebooking.dto.response.ApiResponse;
 import com.servicebooking.dto.response.AuthResponse;
 import com.servicebooking.service.AuthService;
+
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
+
 import jakarta.validation.Valid;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping("/api/auth")
-@Tag(name = "Authentication", description = "Authentication and registration endpoints")
+@Tag(name = "Authentication", description = "Email-based Authentication Endpoints")
 public class AuthController {
 
     @Autowired
     private AuthService authService;
 
+
+    // ================= REGISTER =================
     @PostMapping("/register")
     @Operation(summary = "Register a new user")
-    public ResponseEntity<ApiResponse<AuthResponse>> register(@Valid @RequestBody RegisterRequest request) {
+    public ResponseEntity<ApiResponse<String>> register(
+            @Valid @RequestBody RegisterRequest request) {
+
         return ResponseEntity.ok(authService.register(request));
     }
 
+
+    // ================= LOGIN =================
     @PostMapping("/login")
-    @Operation(summary = "Login user")
-    public ResponseEntity<ApiResponse<AuthResponse>> login(@Valid @RequestBody LoginRequest request) {
+    @Operation(summary = "Login user with email and password")
+    public ResponseEntity<ApiResponse<AuthResponse>> login(
+            @Valid @RequestBody LoginRequest request) {
+
         return ResponseEntity.ok(authService.login(request));
     }
 
-    @PostMapping("/send-otp")
-    @Operation(summary = "Send OTP to mobile number")
-    public ResponseEntity<ApiResponse<String>> sendOtp(@Valid @RequestBody OtpRequest request) {
-        return ResponseEntity.ok(authService.sendOtp(request));
+
+    // ================= FORGOT PASSWORD OTP =================
+    @PostMapping("/forgot-password")
+    @Operation(summary = "Send OTP for password reset")
+    public ResponseEntity<ApiResponse<String>> forgotPassword(
+            @RequestBody @Valid ForgotPasswordRequest request) {
+
+        return ResponseEntity.ok(authService.sendForgotOtp(request));
     }
 
-    @PostMapping("/verify-otp")
-    @Operation(summary = "Verify OTP")
-    public ResponseEntity<ApiResponse<String>> verifyOtp(@Valid @RequestBody VerifyOtpRequest request) {
-        return ResponseEntity.ok(authService.verifyOtp(request));
+    // ================= RESET PASSWORD =================
+    @PostMapping("/reset-password")
+    @Operation(summary = "Reset password using OTP")
+    public ResponseEntity<ApiResponse<String>> resetPassword(
+            @Valid @RequestBody ResetPasswordRequest request) {
+
+        return ResponseEntity.ok(authService.resetPassword(request));
     }
 
-    @PostMapping("/recover-password")
-    @Operation(summary = "Recover password using recovery PIN")
-    public ResponseEntity<ApiResponse<String>> recoverPassword(@Valid @RequestBody RecoverPasswordRequest request) {
-        return ResponseEntity.ok(authService.recoverPassword(request));
-    }
 
+    // ================= LOGOUT =================
     @PostMapping("/logout")
     @Operation(summary = "Logout user")
     public ResponseEntity<ApiResponse<String>> logout() {

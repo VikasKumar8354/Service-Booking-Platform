@@ -14,6 +14,7 @@ import java.math.BigDecimal;
 @NoArgsConstructor
 @AllArgsConstructor
 public class ProviderProfile {
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
@@ -22,7 +23,17 @@ public class ProviderProfile {
     @JoinColumn(name = "user_id", nullable = false)
     private User user;
 
-    private String documents;
+    // ✅ BLOB STORAGE
+    @Lob
+    @Column(name = "document_data")
+    private byte[] documentData;
+
+    // ✅ store mime type
+    private String documentType;
+
+    // ✅ store original file name
+    private String documentName;
+
     private String selectedServices;
 
     @Enumerated(EnumType.STRING)

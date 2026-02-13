@@ -9,8 +9,8 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @AllArgsConstructor
 public class LoginRequest {
-    @NotBlank(message = "Mobile number is required")
-    private String mobileNumber;
+    @NotBlank(message = "Email is required")
+    private String email;
 
     @NotBlank(message = "Password is required")
     private String password;

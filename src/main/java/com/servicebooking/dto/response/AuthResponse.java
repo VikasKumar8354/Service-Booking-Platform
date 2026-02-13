@@ -10,17 +10,17 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 public class AuthResponse {
     private String token;
-    private String tokenType = "Bearer";
+//    private String tokenType = "Bearer";
     private Long userId;
-    private String name;
-    private String mobileNumber;
+//    private String name;
+//    private String mobileNumber;
     private UserRole role;
 
     public AuthResponse(String token, Long userId, String name, String mobileNumber, UserRole role) {
         this.token = token;
         this.userId = userId;
-        this.name = name;
-        this.mobileNumber = mobileNumber;
+//        this.name = name;
+//        this.mobileNumber = mobileNumber;
         this.role = role;
     }
 }
