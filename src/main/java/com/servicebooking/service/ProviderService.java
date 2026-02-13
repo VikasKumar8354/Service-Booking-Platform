@@ -55,7 +55,7 @@ public class ProviderService {
                 provider.setDocumentName(documentFile.getOriginalFilename());
             }
 
-        } catch (Exception e) {
+        } catch (Exception exception) {
             throw new RuntimeException("Upload failed");
         }
 
@@ -105,70 +105,69 @@ public class ProviderService {
     @Transactional
     public ApiResponse<ProviderProfileResponseDTO> approveProvider(Long id) {
 
-        ProviderProfile p = providerRepository.findById(id)
+        ProviderProfile profile = providerRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Provider not found"));
 
-        p.setStatus(ProviderStatus.APPROVED);
-        providerRepository.save(p);
+        profile.setStatus(ProviderStatus.APPROVED);
+        providerRepository.save(profile);
 
         notificationService.createNotification(
-                p.getUser().getId(),
+                profile.getUser().getId(),
                 "Approved",
                 "Your provider application is approved"
         );
 
-        return ApiResponse.success("Approved", toDTO(p));
+        return ApiResponse.success("Approved", toDTO(profile));
     }
 
 
     @Transactional
     public ApiResponse<ProviderProfileResponseDTO> rejectProvider(Long id) {
 
-        ProviderProfile p = providerRepository.findById(id)
+        ProviderProfile profile = providerRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Provider not found"));
 
-        p.setStatus(ProviderStatus.REJECTED);
-        providerRepository.save(p);
+        profile.setStatus(ProviderStatus.REJECTED);
+        providerRepository.save(profile);
 
         notificationService.createNotification(
-                p.getUser().getId(),
+                profile.getUser().getId(),
                 "Rejected",
                 "Your provider application rejected"
         );
 
-        return ApiResponse.success("Rejected", toDTO(p));
+        return ApiResponse.success("Rejected", toDTO(profile));
     }
 
 
     public ApiResponse<PageResponse<ProviderProfileResponseDTO>> getPendingProviders(int page, int size) {
 
-        Page<ProviderProfile> p = providerRepository.findByStatus(
+        Page<ProviderProfile> profiles = providerRepository.findByStatus(
                 ProviderStatus.PENDING_APPROVAL,
                 PageRequest.of(page, size));
 
         PageResponse<ProviderProfileResponseDTO> response =
                 new PageResponse<>(
-                        p.getContent().stream().map(this::toDTO).toList(),
-                        p.getNumber(),
-                        p.getSize(),
-                        p.getTotalElements(),
-                        p.getTotalPages(),
-                        p.isLast()
+                        profiles.getContent().stream().map(this::toDTO).toList(),
+                        profiles.getNumber(),
+                        profiles.getSize(),
+                        profiles.getTotalElements(),
+                        profiles.getTotalPages(),
+                        profiles.isLast()
                 );
 
         return ApiResponse.success("Fetched", response);
     }
 
-    private ProviderProfileResponseDTO toDTO(ProviderProfile p) {
+    private ProviderProfileResponseDTO toDTO(ProviderProfile profile) {
         return new ProviderProfileResponseDTO(
-                p.getId(),
-                p.getSelectedServices(),
-                p.getStatus(),
-                p.getTotalEarnings(),
-                p.getCompletedJobs(),
-                p.getRating(),
-                p.getDocumentData() != null
+                profile.getId(),
+                profile.getSelectedServices(),
+                profile.getStatus(),
+                profile.getTotalEarnings(),
+                profile.getCompletedJobs(),
+                profile.getRating(),
+                profile.getDocumentData() != null
         );
     }
-
 }

@@ -44,8 +44,8 @@ public class CustomerProfileService {
 
             return repository.save(profile);
 
-        } catch (Exception e) {
-            throw new RuntimeException("Image upload failed: " + e.getMessage());
+        } catch (Exception exception) {
+            throw new RuntimeException("Image upload failed: " + exception.getMessage());
         }
     }
 

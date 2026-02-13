@@ -43,24 +43,7 @@ public class User {
     @Column(nullable = false)
     private String status = "ACTIVE";
 
-    @Column(nullable = false)
-    private boolean otpVerified = false;
 
-    @Column(nullable = false)
-    private boolean emailVerified = false;
-
-    // Email verification
-    private String emailVerificationToken;
-    private LocalDateTime emailVerificationExpiry;
-
-    // Reset password fields
-    private String resetOtp; // OTP for reset
-    private LocalDateTime resetOtpExpiry; // Expiry for OTP
-
-    private String resetPasswordToken; // Optional: token-based reset
-    private LocalDateTime resetPasswordExpiry;
-
-    // Auditing fields
     @CreatedDate
     @Column(updatable = false)
     private LocalDateTime createdAt;

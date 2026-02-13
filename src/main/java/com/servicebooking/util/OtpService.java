@@ -1,36 +1,37 @@
 package com.servicebooking.util;
 
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
+
+import java.time.LocalDateTime;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 @Service
 public class OtpService {
 
-    @Value("${otp.hardcoded.value}")
-    private String hardcodedOtp;
+    private final Map<String, OtpData> otpStore = new ConcurrentHashMap<>();
 
-    @Value("${otp.recovery.pin}")
-    private String recoveryPin;
-
-    public String generateOtp(String mobileNumber) {
-        // In production, integrate with SMS gateway
-        System.out.println("OTP for " + mobileNumber + ": " + hardcodedOtp);
-        return hardcodedOtp;
+    public void storeOtp(String email, String otp) {
+        otpStore.put(email,
+                new OtpData(otp, LocalDateTime.now().plusMinutes(10)));
     }
 
-    public boolean verifyOtp(String mobileNumber, String otp) {
-        return hardcodedOtp.equals(otp);
+    public boolean validateOtp(String email, String otp) {
+        OtpData data = otpStore.get(email);
+
+        if (data == null) return false;
+
+        if (data.expiry().isBefore(LocalDateTime.now())) {
+            otpStore.remove(email);
+            return false;
+        }
+
+        boolean valid = data.otp().equals(otp);
+
+        if (valid) otpStore.remove(email);
+
+        return valid;
     }
 
-    public boolean verifyRecoveryPin(String pin) {
-        return recoveryPin.equals(pin);
-    }
-
-    public String getHardcodedOtp() {
-        return hardcodedOtp;
-    }
-
-    public String getRecoveryPin() {
-        return recoveryPin;
-    }
+    private record OtpData(String otp, LocalDateTime expiry) {}
 }

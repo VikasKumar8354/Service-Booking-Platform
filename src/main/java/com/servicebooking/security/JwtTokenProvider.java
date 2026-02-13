@@ -35,16 +35,14 @@ public class JwtTokenProvider {
                 .compact();
     }
 
-    public String generateTokenFromMobile(String mobileNumber) {
-        Date now = new Date();
-        Date expiryDate = new Date(now.getTime() + jwtExpiration);
+    public String getEmailFromToken(String token) {
+        Claims claims = Jwts.parserBuilder()
+                .setSigningKey(getSigningKey())
+                .build()
+                .parseClaimsJws(token)
+                .getBody();
 
-        return Jwts.builder()
-                .setSubject(mobileNumber)
-                .setIssuedAt(now)
-                .setExpiration(expiryDate)
-                .signWith(getSigningKey(), SignatureAlgorithm.HS512)
-                .compact();
+        return claims.getSubject();
     }
 
     public String getMobileFromToken(String token) {
@@ -63,7 +61,7 @@ public class JwtTokenProvider {
                     .build()
                     .parseClaimsJws(token);
             return true;
-        } catch (JwtException | IllegalArgumentException e) {
+        } catch (JwtException | IllegalArgumentException exception) {
             return false;
         }
     }

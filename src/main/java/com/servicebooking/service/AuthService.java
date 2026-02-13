@@ -10,6 +10,7 @@ import com.servicebooking.exception.UnauthorizedException;
 import com.servicebooking.repository.*;
 import com.servicebooking.security.JwtTokenProvider;
 import com.servicebooking.util.EmailService;
+import com.servicebooking.util.OtpService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -44,6 +45,9 @@ public class AuthService {
 
     @Autowired
     private EmailService emailService;
+
+    @Autowired
+    private OtpService otpService;
 
 
     // ================= REGISTER =================
@@ -99,33 +103,34 @@ public class AuthService {
 
         String token = tokenProvider.generateToken(authentication);
 
+        // ✅ Bearer prefix add
+        String bearerToken = "Bearer " + token;
+
         AuthResponse response = new AuthResponse(
-                token,
                 user.getId(),
-                user.getName(),
-                user.getEmail(),
-                user.getRole()
+                user.getRole(),
+                bearerToken
         );
 
         return ApiResponse.success("Login successful", response);
     }
 
-
     // ================= SEND OTP (FORGOT PASSWORD) =================
     @Transactional
     public ApiResponse<String> sendForgotOtp(ForgotPasswordRequest request) {
-        // Find user by email
+
         User user = userRepository.findByEmail(request.getEmail())
                 .orElseThrow(() -> new BadRequestException("Email not found"));
 
-        // Generate OTP and set expiry
         String otp = generateOtp();
-        user.setResetOtp(otp);
-        user.setResetOtpExpiry(LocalDateTime.now().plusMinutes(10));
-        userRepository.save(user);
 
-        // Send OTP via email
-        emailService.sendEmail(request.getEmail(), "Password Reset OTP", "Your OTP is: " + otp);
+        otpService.storeOtp(request.getEmail(), otp);
+
+        emailService.sendEmail(
+                request.getEmail(),
+                "Password Reset OTP",
+                "Your OTP is: " + otp
+        );
 
         return ApiResponse.success("OTP sent to email");
     }
@@ -138,17 +143,17 @@ public class AuthService {
         User user = userRepository.findByEmail(request.getEmail())
                 .orElseThrow(() -> new BadRequestException("Email not found"));
 
-        // Validate OTP
-        if (user.getResetOtp() == null || !user.getResetOtp().equals(request.getOtp()))
-            throw new BadRequestException("Invalid OTP");
+        boolean valid = otpService.validateOtp(
+                request.getEmail(),
+                request.getOtp()
+        );
 
-        if (user.getResetOtpExpiry() == null || user.getResetOtpExpiry().isBefore(LocalDateTime.now()))
-            throw new BadRequestException("OTP expired");
+        if (!valid)
+            throw new BadRequestException("Invalid or expired OTP");
 
-        // Reset password
-        user.setPassword(passwordEncoder.encode(request.getNewPassword()));
-        user.setResetOtp(null);
-        user.setResetOtpExpiry(null);
+        user.setPassword(
+                passwordEncoder.encode(request.getNewPassword())
+        );
 
         userRepository.save(user);
 

@@ -12,12 +12,8 @@ import java.util.Optional;
 @Repository
 public interface UserRepository extends JpaRepository<User, Long> {
     Optional<User> findByMobileNumber(String mobileNumber);
-    boolean existsByMobileNumber(String mobileNumber);
-    Page<User> findByRole(UserRole role, Pageable pageable);
 
     Optional<User> findByEmail(String email);
     boolean existsByEmail(String email);
 
-    Optional<User> findByEmailVerificationToken(String token);
-    Optional<User> findByResetPasswordToken(String token);
 }
