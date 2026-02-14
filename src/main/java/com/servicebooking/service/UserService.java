@@ -25,20 +25,28 @@ public class UserService {
     @Autowired
     private PasswordEncoder passwordEncoder;
 
+    // ✅ FIXED HERE
     public User getCurrentUser() {
-        String mobile = SecurityContextHolder.getContext().getAuthentication().getName();
-        return userRepository.findByMobileNumber(mobile)
-                .orElseThrow(() -> new ResourceNotFoundException("User not found"));
+
+        String email = SecurityContextHolder
+                .getContext()
+                .getAuthentication()
+                .getName();
+
+        return userRepository.findByEmailIgnoreCase(email)
+                .orElseThrow(() ->
+                        new ResourceNotFoundException("User not found"));
     }
 
     public ApiResponse<User> getProfile() {
         User user = getCurrentUser();
-        user.setPassword(null); // Don't expose password
+        user.setPassword(null);
         return ApiResponse.success("Profile fetched successfully", user);
     }
 
     @Transactional
     public ApiResponse<User> updateProfile(Map<String, String> updates) {
+
         User user = getCurrentUser();
 
         if (updates.containsKey("name")) {
@@ -53,13 +61,16 @@ public class UserService {
 
     @Transactional
     public ApiResponse<String> deleteAccount() {
+
         User user = getCurrentUser();
         user.setStatus("DELETED");
         userRepository.save(user);
+
         return ApiResponse.success("Account deleted successfully");
     }
 
     public ApiResponse<PageResponse<User>> getAllUsers(int page, int size) {
+
         Pageable pageable = PageRequest.of(page, size);
         Page<User> userPage = userRepository.findAll(pageable);
 

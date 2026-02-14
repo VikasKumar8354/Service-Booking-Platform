@@ -1,9 +1,10 @@
 package com.servicebooking.security;
 
-import io.jsonwebtoken.*;
+import io.jsonwebtoken.Claims;
+import io.jsonwebtoken.Jwts;
+import io.jsonwebtoken.SignatureAlgorithm;
 import io.jsonwebtoken.security.Keys;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Component;
 
 import java.security.Key;
@@ -22,36 +23,31 @@ public class JwtTokenProvider {
         return Keys.hmacShaKeyFor(jwtSecret.getBytes());
     }
 
-    public String generateToken(Authentication authentication) {
-        String username = authentication.getName();
+    public String generateToken(String email, String role) {
+
+        email = email.trim().toLowerCase();
+
         Date now = new Date();
-        Date expiryDate = new Date(now.getTime() + jwtExpiration);
+        Date expiry = new Date(now.getTime() + jwtExpiration);
 
         return Jwts.builder()
-                .setSubject(username)
+                .setSubject(email)
+                .claim("role", role)
                 .setIssuedAt(now)
-                .setExpiration(expiryDate)
+                .setExpiration(expiry)
                 .signWith(getSigningKey(), SignatureAlgorithm.HS512)
                 .compact();
     }
 
     public String getEmailFromToken(String token) {
-        Claims claims = Jwts.parserBuilder()
+        return Jwts.parserBuilder()
                 .setSigningKey(getSigningKey())
                 .build()
                 .parseClaimsJws(token)
-                .getBody();
-
-        return claims.getSubject();
-    }
-
-    public String getMobileFromToken(String token) {
-        Claims claims = Jwts.parserBuilder()
-                .setSigningKey(getSigningKey())
-                .build()
-                .parseClaimsJws(token)
-                .getBody();
-        return claims.getSubject();
+                .getBody()
+                .getSubject()
+                .trim()
+                .toLowerCase();
     }
 
     public boolean validateToken(String token) {
@@ -61,7 +57,7 @@ public class JwtTokenProvider {
                     .build()
                     .parseClaimsJws(token);
             return true;
-        } catch (JwtException | IllegalArgumentException exception) {
+        } catch (Exception e) {
             return false;
         }
     }

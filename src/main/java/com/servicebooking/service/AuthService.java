@@ -49,18 +49,19 @@ public class AuthService {
     @Autowired
     private OtpService otpService;
 
-
     // ================= REGISTER =================
     @Transactional
     public ApiResponse<String> register(RegisterRequest request) {
 
-        if (userRepository.existsByEmail(request.getEmail()))
+        String email = request.getEmail().trim().toLowerCase();
+
+        if (userRepository.existsByEmailIgnoreCase(email))
             throw new BadRequestException("Email already registered");
 
         User user = new User();
         user.setName(request.getName());
-        user.setMobileNumber(request.getMobileNumber()); // Add mobile number
-        user.setEmail(request.getEmail());
+        user.setMobileNumber(request.getMobileNumber());
+        user.setEmail(email);
         user.setPassword(passwordEncoder.encode(request.getPassword()));
         user.setRole(request.getRole());
         user.setStatus("ACTIVE");
@@ -69,65 +70,69 @@ public class AuthService {
 
         // create profile
         switch (request.getRole()) {
+
             case CUSTOMER -> {
-                CustomerProfile cp = new CustomerProfile();
-                cp.setUser(user);
-                customerProfileRepository.save(cp);
+                CustomerProfile profile = new CustomerProfile();
+                profile.setUser(user);
+                customerProfileRepository.save(profile);
             }
+
             case PROVIDER -> {
-                ProviderProfile pp = new ProviderProfile();
-                pp.setUser(user);
-                pp.setStatus(ProviderStatus.PENDING_APPROVAL);
-                providerProfileRepository.save(pp);
+                ProviderProfile profile = new ProviderProfile();
+                profile.setUser(user);
+                profile.setStatus(ProviderStatus.PENDING_APPROVAL);
+                providerProfileRepository.save(profile);
             }
         }
 
         return ApiResponse.success("Registered successfully. You can login now.");
     }
 
-
     // ================= LOGIN =================
     public ApiResponse<AuthResponse> login(LoginRequest request) {
 
+        String email = request.getEmail().trim().toLowerCase();
+
         User user = userRepository
-                .findByEmail(request.getEmail())
-                .orElseThrow(() -> new UnauthorizedException("Invalid credentials"));
+                .findByEmailIgnoreCase(email)
+                .orElseThrow(() ->
+                        new UnauthorizedException("Invalid credentials"));
 
-        Authentication authentication =
-                authenticationManager.authenticate(
-                        new UsernamePasswordAuthenticationToken(
-                                request.getEmail(),
-                                request.getPassword()
-                        )
-                );
-
-        String token = tokenProvider.generateToken(authentication);
-
-        // ✅ Bearer prefix add
-        String bearerToken = "Bearer " + token;
-
-        AuthResponse response = new AuthResponse(
-                user.getId(),
-                user.getRole(),
-                bearerToken
+        authenticationManager.authenticate(
+                new UsernamePasswordAuthenticationToken(
+                        email,
+                        request.getPassword()
+                )
         );
 
-        return ApiResponse.success("Login successful", response);
+        String token = tokenProvider.generateToken(
+                email,
+                user.getRole().name()
+        );
+
+        return ApiResponse.success("Login successful",
+                new AuthResponse(
+                        user.getId(),
+                        user.getRole(),
+                        "Bearer " + token
+                ));
     }
 
-    // ================= SEND OTP (FORGOT PASSWORD) =================
+    // ================= SEND OTP =================
     @Transactional
     public ApiResponse<String> sendForgotOtp(ForgotPasswordRequest request) {
 
-        User user = userRepository.findByEmail(request.getEmail())
+        String email = request.getEmail().trim().toLowerCase();
+
+        User user = userRepository.findByEmailIgnoreCase(email)
                 .orElseThrow(() -> new BadRequestException("Email not found"));
 
         String otp = generateOtp();
 
-        otpService.storeOtp(request.getEmail(), otp);
+        otpService.storeOtp(email, otp);
 
         emailService.sendEmail(
-                request.getEmail(),
+                email,
                 "Password Reset OTP",
                 "Your OTP is: " + otp
         );
@@ -135,37 +140,31 @@ public class AuthService {
         return ApiResponse.success("OTP sent to email");
     }
 
-
     // ================= RESET PASSWORD =================
     @Transactional
     public ApiResponse<String> resetPassword(ResetPasswordRequest request) {
 
-        User user = userRepository.findByEmail(request.getEmail())
+        String email = request.getEmail().trim().toLowerCase();
+
+        User user = userRepository.findByEmailIgnoreCase(email)
                 .orElseThrow(() -> new BadRequestException("Email not found"));
 
-        boolean valid = otpService.validateOtp(
-                request.getEmail(),
-                request.getOtp()
-        );
+        boolean valid = otpService.validateOtp(email, request.getOtp());
 
         if (!valid)
             throw new BadRequestException("Invalid or expired OTP");
 
-        user.setPassword(
-                passwordEncoder.encode(request.getNewPassword())
-        );
+        user.setPassword(passwordEncoder.encode(request.getNewPassword()));
 
         userRepository.save(user);
 
         return ApiResponse.success("Password reset successful");
     }
 
-
     // ================= LOGOUT =================
     public ApiResponse<String> logout() {
         return ApiResponse.success("Logout successful");
     }
-
 
     // ================= OTP GENERATOR =================
     private String generateOtp() {

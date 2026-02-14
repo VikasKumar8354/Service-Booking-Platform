@@ -22,7 +22,7 @@ public class CustomerProfile {
 
     private String email;
 
-    // ✅ BLOB image storage
+
     @Lob
     @Column(name = "profile_image_data", columnDefinition = "LONGBLOB")
     private byte[] profileImageData;

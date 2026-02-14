@@ -25,7 +25,7 @@ public class ProviderProfile {
 
     // ✅ BLOB STORAGE
     @Lob
-    @Column(name = "document_data")
+    @Column(name = "document_data", columnDefinition = "LONGBLOB")
     private byte[] documentData;
 
     // ✅ store mime type

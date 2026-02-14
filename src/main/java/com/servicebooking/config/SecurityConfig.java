@@ -22,11 +22,14 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 @EnableMethodSecurity
 public class SecurityConfig {
 
-    @Autowired
-    private CustomUserDetailsService userDetailsService;
+    private final CustomUserDetailsService userDetailsService;
+    private final JwtAuthenticationFilter jwtFilter;
 
-    @Autowired
-    private JwtAuthenticationFilter jwtAuthenticationFilter;
+    public SecurityConfig(CustomUserDetailsService userDetailsService,
+                          JwtAuthenticationFilter jwtFilter) {
+        this.userDetailsService = userDetailsService;
+        this.jwtFilter = jwtFilter;
+    }
 
     @Bean
     public PasswordEncoder passwordEncoder() {
@@ -34,46 +37,40 @@ public class SecurityConfig {
     }
 
     @Bean
-    public DaoAuthenticationProvider authenticationProvider() {
+    public DaoAuthenticationProvider provider() {
+
         DaoAuthenticationProvider provider =
                 new DaoAuthenticationProvider(userDetailsService);
+
         provider.setPasswordEncoder(passwordEncoder());
+
         return provider;
-    }
-
-
-    @Bean
-    public AuthenticationManager authenticationManager(AuthenticationConfiguration authConfig) throws Exception {
-        return authConfig.getAuthenticationManager();
     }
 
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
+
         http.csrf(csrf -> csrf.disable())
-                .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+                .sessionManagement(s ->
+                        s.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/api/auth/**").permitAll()
-                        .requestMatchers("/swagger-ui/**", "/v3/api-docs/**", "/swagger-ui.html").permitAll()
-                        .requestMatchers("/h2-console/**").permitAll()
-
-                        // ✅ ADMIN endpoints first
-                        .requestMatchers("/api/provider/*/approve").hasRole("ADMIN")
-                        .requestMatchers("/api/provider/*/reject").hasRole("ADMIN")
-                        .requestMatchers("/api/provider/pending").hasRole("ADMIN")
-
-                        // ✅ Provider endpoints
-                        .requestMatchers("/api/provider/**").hasRole("PROVIDER")
-
+                        .requestMatchers("/swagger-ui/**", "/v3/api-docs/**").permitAll()
                         .requestMatchers("/api/admin/**").hasRole("ADMIN")
+                        .requestMatchers("/api/provider/**").hasAnyRole("PROVIDER","ADMIN")
                         .requestMatchers("/api/customer/**").hasRole("CUSTOMER")
-
                         .anyRequest().authenticated()
-                );
-
-        http.authenticationProvider(authenticationProvider());
-        http.addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
-        http.headers(headers -> headers.frameOptions(frame -> frame.disable()));
+                )
+                .authenticationProvider(provider())
+                .addFilterBefore(jwtFilter,
+                        UsernamePasswordAuthenticationFilter.class);
 
         return http.build();
+    }
+
+    @Bean
+    public AuthenticationManager authManager(
+            AuthenticationConfiguration config) throws Exception {
+        return config.getAuthenticationManager();
     }
 }
