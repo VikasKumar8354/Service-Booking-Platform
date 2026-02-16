@@ -1,5 +1,7 @@
 package com.servicebooking.service;
 
+import com.servicebooking.dto.request.AddressRequestDTO;
+import com.servicebooking.dto.response.AddressResponseDTO;
 import com.servicebooking.dto.response.ApiResponse;
 import com.servicebooking.entity.Address;
 import com.servicebooking.entity.CustomerProfile;
@@ -7,80 +9,150 @@ import com.servicebooking.entity.User;
 import com.servicebooking.exception.ResourceNotFoundException;
 import com.servicebooking.repository.AddressRepository;
 import com.servicebooking.repository.CustomerProfileRepository;
-import org.springframework.beans.factory.annotation.Autowired;
+import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
-import java.util.Map;
+import java.util.Objects;
 
 @Service
+@RequiredArgsConstructor
 public class AddressService {
 
-    @Autowired
-    private AddressRepository addressRepository;
+    private final AddressRepository addressRepository;
+    private final CustomerProfileRepository customerProfileRepository;
+    private final UserService userService;
 
-    @Autowired
-    private CustomerProfileRepository customerProfileRepository;
-
-    @Autowired
-    private UserService userService;
-
+    // ✅ ADD ADDRESS
     @Transactional
-    public ApiResponse<Address> addAddress(Map<String, Object> request) {
-        User currentUser = userService.getCurrentUser();
-        CustomerProfile customer = customerProfileRepository.findByUser(currentUser)
-                .orElseThrow(() -> new ResourceNotFoundException("Customer profile not found"));
+    public ApiResponse<AddressResponseDTO> addAddress(AddressRequestDTO request) {
 
+        User currentUser = userService.getCurrentUser();
+
+        CustomerProfile customer = customerProfileRepository
+                .findByUser(currentUser)
+                .orElseThrow(() ->
+                        new ResourceNotFoundException("Customer profile not found"));
+
+        // DTO -> Entity mapping
         Address address = new Address();
         address.setCustomer(customer);
-        address.setAddressLine(request.get("addressLine").toString());
-        address.setCity(request.get("city").toString());
-        address.setState(request.get("state").toString());
-        address.setPincode(request.get("pincode").toString());
-        address.setIsDefault(Boolean.parseBoolean(request.getOrDefault("isDefault", "false").toString()));
+        address.setAddressLine(request.getAddressLine());
+        address.setCity(request.getCity());
+        address.setState(request.getState());
+        address.setPincode(request.getPincode());
 
-        if (address.getIsDefault()) {
-            List<Address> existingAddresses = addressRepository.findByCustomer(customer);
-            existingAddresses.forEach(addr -> {
-                addr.setIsDefault(false);
-                addressRepository.save(addr);
-            });
+        // Default logic
+        if (Boolean.TRUE.equals(request.getIsDefault())) {
+            clearDefaultAddresses(customer);
+            address.setIsDefault(true);
+        } else {
+            address.setIsDefault(false);
         }
 
-        address = addressRepository.save(address);
-        return ApiResponse.success("Address added successfully", address);
+        Address saved = addressRepository.save(address);
+
+        return ApiResponse.success(
+                "Address added successfully",
+                mapToDTO(saved)
+        );
     }
 
-    public ApiResponse<List<Address>> getAllAddresses() {
+    // ✅ GET ALL ADDRESSES
+    @Transactional(readOnly = true)
+    public ApiResponse<List<AddressResponseDTO>> getAllAddresses() {
+
         User currentUser = userService.getCurrentUser();
-        CustomerProfile customer = customerProfileRepository.findByUser(currentUser)
-                .orElseThrow(() -> new ResourceNotFoundException("Customer profile not found"));
 
-        List<Address> addresses = addressRepository.findByCustomer(customer);
-        return ApiResponse.success("Addresses fetched successfully", addresses);
+        CustomerProfile customer = customerProfileRepository
+                .findByUser(currentUser)
+                .orElseThrow(() ->
+                        new ResourceNotFoundException("Customer profile not found"));
+
+        List<AddressResponseDTO> list = addressRepository
+                .findByCustomer(customer)
+                .stream()
+                .map(this::mapToDTO)
+                .toList();
+
+        return ApiResponse.success("Addresses fetched successfully", list);
     }
 
+    // ✅ UPDATE ADDRESS
     @Transactional
-    public ApiResponse<Address> updateAddress(Long id, Map<String, Object> updates) {
+    public ApiResponse<AddressResponseDTO> updateAddress(Long id,
+                                                         AddressRequestDTO request) {
+
+        User currentUser = userService.getCurrentUser();
+
         Address address = addressRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Address not found"));
+                .orElseThrow(() ->
+                        new ResourceNotFoundException("Address not found"));
 
-        if (updates.containsKey("addressLine")) address.setAddressLine(updates.get("addressLine").toString());
-        if (updates.containsKey("city")) address.setCity(updates.get("city").toString());
-        if (updates.containsKey("state")) address.setState(updates.get("state").toString());
-        if (updates.containsKey("pincode")) address.setPincode(updates.get("pincode").toString());
+        // Ownership check
+        if (!Objects.equals(
+                address.getCustomer().getUser().getId(),
+                currentUser.getId())) {
+            throw new RuntimeException("Not allowed to update this address");
+        }
 
-        address = addressRepository.save(address);
-        return ApiResponse.success("Address updated successfully", address);
+        // Update fields
+        address.setAddressLine(request.getAddressLine());
+        address.setCity(request.getCity());
+        address.setState(request.getState());
+        address.setPincode(request.getPincode());
+
+        if (Boolean.TRUE.equals(request.getIsDefault())) {
+            clearDefaultAddresses(address.getCustomer());
+            address.setIsDefault(true);
+        }
+
+        Address saved = addressRepository.save(address);
+
+        return ApiResponse.success(
+                "Address updated successfully",
+                mapToDTO(saved)
+        );
     }
 
+    // ✅ DELETE ADDRESS
     @Transactional
     public ApiResponse<String> deleteAddress(Long id) {
-        if (!addressRepository.existsById(id)) {
-            throw new ResourceNotFoundException("Address not found");
+
+        User currentUser = userService.getCurrentUser();
+
+        Address address = addressRepository.findById(id)
+                .orElseThrow(() ->
+                        new ResourceNotFoundException("Address not found"));
+
+        if (!Objects.equals(
+                address.getCustomer().getUser().getId(),
+                currentUser.getId())) {
+            throw new RuntimeException("Not allowed to delete this address");
         }
-        addressRepository.deleteById(id);
+
+        addressRepository.delete(address);
+
         return ApiResponse.success("Address deleted successfully");
+    }
+
+    // ✅ DTO MAPPING METHOD (inside service)
+    private AddressResponseDTO mapToDTO(Address address) {
+        return AddressResponseDTO.builder()
+                .id(address.getId())
+                .addressLine(address.getAddressLine())
+                .city(address.getCity())
+                .state(address.getState())
+                .pincode(address.getPincode())
+                .isDefault(address.getIsDefault())
+                .build();
+    }
+
+    // ✅ CLEAR DEFAULT
+    private void clearDefaultAddresses(CustomerProfile customer) {
+        List<Address> existing = addressRepository.findByCustomer(customer);
+        existing.forEach(a -> a.setIsDefault(false));
+        addressRepository.saveAll(existing);
     }
 }

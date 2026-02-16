@@ -1,8 +1,8 @@
 {
   "info": {
-    "name": "Service Booking Platform API",
-    "_postman_id": "service-booking-platform-collection",
-    "description": "Complete API collection for Service Booking Platform",
+    "name": "Service Booking Platform API - FINAL",
+    "_postman_id": "service-booking-platform-final",
+    "description": "Complete API collection matching Spring Boot controllers",
     "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
   },
   "auth": {
@@ -28,692 +28,227 @@
     }
   ],
   "item": [
+
     {
-      "name": "Authentication",
+      "name": "AUTHENTICATION",
       "item": [
+
         {
-          "name": "Register Customer",
+          "name": "Register",
           "request": {
             "method": "POST",
-            "header": [{"key": "Content-Type", "value": "application/json"}],
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"name\": \"John Doe\",\n  \"mobileNumber\": \"9876543210\",\n  \"password\": \"password123\",\n  \"role\": \"CUSTOMER\"\n}"
+              "raw": "{\n  \"name\": \"John Doe\",\n  \"email\": \"john@example.com\",\n  \"password\": \"password123\",\n  \"role\": \"CUSTOMER\"\n}"
             },
-            "url": {
-              "raw": "{{base_url}}/auth/register",
-              "host": ["{{base_url}}"],
-              "path": ["auth", "register"]
-            }
+            "url": { "raw": "{{base_url}}/auth/register" }
           }
         },
-        {
-          "name": "Register Provider",
-          "request": {
-            "method": "POST",
-            "header": [{"key": "Content-Type", "value": "application/json"}],
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"name\": \"Service Provider\",\n  \"mobileNumber\": \"8765432109\",\n  \"password\": \"provider123\",\n  \"role\": \"PROVIDER\"\n}"
-            },
-            "url": {
-              "raw": "{{base_url}}/auth/register",
-              "host": ["{{base_url}}"],
-              "path": ["auth", "register"]
-            }
-          }
-        },
-        {
-          "name": "Register Admin",
-          "request": {
-            "method": "POST",
-            "header": [{"key": "Content-Type", "value": "application/json"}],
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"name\": \"Admin User\",\n  \"mobileNumber\": \"7654321098\",\n  \"password\": \"admin123\",\n  \"role\": \"ADMIN\"\n}"
-            },
-            "url": {
-              "raw": "{{base_url}}/auth/register",
-              "host": ["{{base_url}}"],
-              "path": ["auth", "register"]
-            }
-          }
-        },
+
         {
           "name": "Login",
           "event": [
             {
               "listen": "test",
               "script": {
-                "exec": ["var jsonData = JSON.parse(responseBody);", "pm.environment.set(\"jwt_token\", jsonData.data.token);"],
-                "type": "text/javascript"
+                "exec": [
+                  "var jsonData = JSON.parse(responseBody);",
+                  "pm.environment.set(\"jwt_token\", jsonData.data.token);"
+                ]
               }
             }
           ],
           "request": {
             "method": "POST",
-            "header": [{"key": "Content-Type", "value": "application/json"}],
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"mobileNumber\": \"9876543210\",\n  \"password\": \"password123\"\n}"
+              "raw": "{\n  \"email\": \"john@example.com\",\n  \"password\": \"password123\"\n}"
             },
-            "url": {
-              "raw": "{{base_url}}/auth/login",
-              "host": ["{{base_url}}"],
-              "path": ["auth", "login"]
-            }
+            "url": { "raw": "{{base_url}}/auth/login" }
           }
         },
+
         {
-          "name": "Send OTP",
+          "name": "Forgot Password",
           "request": {
             "method": "POST",
-            "header": [{"key": "Content-Type", "value": "application/json"}],
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"mobileNumber\": \"9876543210\"\n}"
+              "raw": "{\n  \"email\": \"john@example.com\"\n}"
             },
-            "url": {
-              "raw": "{{base_url}}/auth/send-otp",
-              "host": ["{{base_url}}"],
-              "path": ["auth", "send-otp"]
-            }
+            "url": { "raw": "{{base_url}}/auth/forgot-password" }
           }
         },
+
         {
-          "name": "Verify OTP",
+          "name": "Reset Password",
           "request": {
             "method": "POST",
-            "header": [{"key": "Content-Type", "value": "application/json"}],
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"mobileNumber\": \"9876543210\",\n  \"otp\": \"123456\"\n}"
+              "raw": "{\n  \"email\": \"john@example.com\",\n  \"otp\": \"123456\",\n  \"newPassword\": \"newpassword123\"\n}"
             },
-            "url": {
-              "raw": "{{base_url}}/auth/verify-otp",
-              "host": ["{{base_url}}"],
-              "path": ["auth", "verify-otp"]
-            }
+            "url": { "raw": "{{base_url}}/auth/reset-password" }
           }
         },
-        {
-          "name": "Recover Password",
-          "request": {
-            "method": "POST",
-            "header": [{"key": "Content-Type", "value": "application/json"}],
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"mobileNumber\": \"9876543210\",\n  \"recoveryPin\": \"9999\",\n  \"newPassword\": \"newpassword123\"\n}"
-            },
-            "url": {
-              "raw": "{{base_url}}/auth/recover-password",
-              "host": ["{{base_url}}"],
-              "path": ["auth", "recover-password"]
-            }
-          }
-        },
+
         {
           "name": "Logout",
           "request": {
             "method": "POST",
-            "header": [],
-            "url": {
-              "raw": "{{base_url}}/auth/logout",
-              "host": ["{{base_url}}"],
-              "path": ["auth", "logout"]
-            }
+            "url": { "raw": "{{base_url}}/auth/logout" }
           }
         }
       ]
     },
+
     {
-      "name": "Users",
+      "name": "USERS",
       "item": [
-        {
-          "name": "Get Profile",
-          "request": {
-            "method": "GET",
-            "header": [],
-            "url": {
-              "raw": "{{base_url}}/users/profile",
-              "host": ["{{base_url}}"],
-              "path": ["users", "profile"]
-            }
-          }
-        },
+
+        { "name": "Get Profile", "request": { "method": "GET", "url": "{{base_url}}/users/profile" } },
+
         {
           "name": "Update Profile",
           "request": {
             "method": "PUT",
-            "header": [{"key": "Content-Type", "value": "application/json"}],
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"name\": \"Updated Name\"\n}"
-            },
-            "url": {
-              "raw": "{{base_url}}/users/profile",
-              "host": ["{{base_url}}"],
-              "path": ["users", "profile"]
-            }
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"name\": \"Updated Name\"\n}" },
+            "url": "{{base_url}}/users/profile"
           }
         },
-        {
-          "name": "Get All Users (Admin)",
-          "request": {
-            "method": "GET",
-            "header": [],
-            "url": {
-              "raw": "{{base_url}}/users?page=0&size=10",
-              "host": ["{{base_url}}"],
-              "path": ["users"],
-              "query": [
-                {"key": "page", "value": "0"},
-                {"key": "size", "value": "10"}
-              ]
-            }
-          }
-        },
-        {
-          "name": "Delete Account",
-          "request": {
-            "method": "DELETE",
-            "header": [],
-            "url": {
-              "raw": "{{base_url}}/users/account",
-              "host": ["{{base_url}}"],
-              "path": ["users", "account"]
-            }
-          }
-        }
+
+        { "name": "Delete Account", "request": { "method": "DELETE", "url": "{{base_url}}/users/account" } },
+
+        { "name": "Get All Users (Admin)", "request": { "method": "GET", "url": "{{base_url}}/users?page=0&size=10" } }
+
       ]
     },
+
     {
-      "name": "Service Catalog",
+      "name": "SERVICE CATALOG",
       "item": [
+
         {
-          "name": "Add Category (Admin)",
+          "name": "Add Category",
           "request": {
             "method": "POST",
-            "header": [{"key": "Content-Type", "value": "application/json"}],
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"name\": \"Plumbing\",\n  \"description\": \"Plumbing services\",\n  \"icon\": \"plumbing-icon\"\n}"
-            },
-            "url": {
-              "raw": "{{base_url}}/services/categories",
-              "host": ["{{base_url}}"],
-              "path": ["services", "categories"]
-            }
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"name\": \"Plumbing\",\n  \"description\": \"Plumbing services\",\n  \"icon\": \"plumbing-icon\"\n}" },
+            "url": "{{base_url}}/services/categories"
           }
         },
+
+        { "name": "Get Categories", "request": { "method": "GET", "url": "{{base_url}}/services/categories" } },
+
         {
-          "name": "Get All Categories",
-          "request": {
-            "method": "GET",
-            "header": [],
-            "url": {
-              "raw": "{{base_url}}/services/categories",
-              "host": ["{{base_url}}"],
-              "path": ["services", "categories"]
-            }
-          }
-        },
-        {
-          "name": "Update Category (Admin)",
-          "request": {
-            "method": "PUT",
-            "header": [{"key": "Content-Type", "value": "application/json"}],
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"name\": \"Updated Plumbing\",\n  \"description\": \"Updated description\"\n}"
-            },
-            "url": {
-              "raw": "{{base_url}}/services/categories/1",
-              "host": ["{{base_url}}"],
-              "path": ["services", "categories", "1"]
-            }
-          }
-        },
-        {
-          "name": "Delete Category (Admin)",
-          "request": {
-            "method": "DELETE",
-            "header": [],
-            "url": {
-              "raw": "{{base_url}}/services/categories/1",
-              "host": ["{{base_url}}"],
-              "path": ["services", "categories", "1"]
-            }
-          }
-        },
-        {
-          "name": "Add Service Item (Admin)",
+          "name": "Add Service Item",
           "request": {
             "method": "POST",
-            "header": [{"key": "Content-Type", "value": "application/json"}],
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"categoryId\": 1,\n  \"name\": \"Pipe Repair\",\n  \"description\": \"Fix broken pipes\",\n  \"basePrice\": 500.00\n}"
-            },
-            "url": {
-              "raw": "{{base_url}}/services/items",
-              "host": ["{{base_url}}"],
-              "path": ["services", "items"]
-            }
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"categoryId\": 1,\n  \"name\": \"Pipe Repair\",\n  \"description\": \"Fix broken pipes\",\n  \"basePrice\": 500\n}" },
+            "url": "{{base_url}}/services/items"
           }
         },
-        {
-          "name": "Search Services",
-          "request": {
-            "method": "GET",
-            "header": [],
-            "url": {
-              "raw": "{{base_url}}/services/search?keyword=plumbing&page=0&size=10",
-              "host": ["{{base_url}}"],
-              "path": ["services", "search"],
-              "query": [
-                {"key": "keyword", "value": "plumbing"},
-                {"key": "page", "value": "0"},
-                {"key": "size", "value": "10"}
-              ]
-            }
-          }
-        }
+
+        { "name": "Search Services", "request": { "method": "GET", "url": "{{base_url}}/services/search?keyword=plumbing&page=0&size=10" } }
+
       ]
     },
+
     {
-      "name": "Bookings",
+      "name": "BOOKINGS",
       "item": [
+
         {
           "name": "Create Booking",
           "request": {
             "method": "POST",
-            "header": [{"key": "Content-Type", "value": "application/json"}],
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"serviceId\": 1,\n  \"bookingDateTime\": \"2026-03-15T10:00:00\",\n  \"location\": \"123 Main St, City\"\n}"
-            },
-            "url": {
-              "raw": "{{base_url}}/bookings",
-              "host": ["{{base_url}}"],
-              "path": ["bookings"]
-            }
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"serviceId\": 1,\n  \"bookingDateTime\": \"2026-03-15T10:00:00\",\n  \"location\": \"Mumbai\"\n}" },
+            "url": "{{base_url}}/bookings"
           }
         },
-        {
-          "name": "Assign Provider (Admin)",
-          "request": {
-            "method": "PUT",
-            "header": [],
-            "url": {
-              "raw": "{{base_url}}/bookings/1/assign-provider?providerId=2",
-              "host": ["{{base_url}}"],
-              "path": ["bookings", "1", "assign-provider"],
-              "query": [{"key": "providerId", "value": "2"}]
-            }
-          }
-        },
-        {
-          "name": "Update Booking Status",
-          "request": {
-            "method": "PUT",
-            "header": [],
-            "url": {
-              "raw": "{{base_url}}/bookings/1/status?status=ACCEPTED",
-              "host": ["{{base_url}}"],
-              "path": ["bookings", "1", "status"],
-              "query": [{"key": "status", "value": "ACCEPTED"}]
-            }
-          }
-        },
-        {
-          "name": "Get Customer Bookings",
-          "request": {
-            "method": "GET",
-            "header": [],
-            "url": {
-              "raw": "{{base_url}}/bookings/customer?page=0&size=10",
-              "host": ["{{base_url}}"],
-              "path": ["bookings", "customer"],
-              "query": [
-                {"key": "page", "value": "0"},
-                {"key": "size", "value": "10"}
-              ]
-            }
-          }
-        },
-        {
-          "name": "Get Provider Bookings",
-          "request": {
-            "method": "GET",
-            "header": [],
-            "url": {
-              "raw": "{{base_url}}/bookings/provider?page=0&size=10",
-              "host": ["{{base_url}}"],
-              "path": ["bookings", "provider"],
-              "query": [
-                {"key": "page", "value": "0"},
-                {"key": "size", "value": "10"}
-              ]
-            }
-          }
-        },
-        {
-          "name": "Filter Bookings",
-          "request": {
-            "method": "POST",
-            "header": [{"key": "Content-Type", "value": "application/json"}],
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"status\": \"COMPLETED\",\n  \"fromDate\": \"2026-02-01\",\n  \"toDate\": \"2026-02-28\",\n  \"sortBy\": \"createdAt\",\n  \"sortOrder\": \"DESC\"\n}"
-            },
-            "url": {
-              "raw": "{{base_url}}/bookings/filter?page=0&size=10",
-              "host": ["{{base_url}}"],
-              "path": ["bookings", "filter"],
-              "query": [
-                {"key": "page", "value": "0"},
-                {"key": "size", "value": "10"}
-              ]
-            }
-          }
-        },
-        {
-          "name": "Cancel Booking",
-          "request": {
-            "method": "DELETE",
-            "header": [],
-            "url": {
-              "raw": "{{base_url}}/bookings/1",
-              "host": ["{{base_url}}"],
-              "path": ["bookings", "1"]
-            }
-          }
-        }
+
+        { "name": "Assign Provider", "request": { "method": "PUT", "url": "{{base_url}}/bookings/1/assign-provider?providerId=2" } },
+
+        { "name": "Update Booking Status", "request": { "method": "PUT", "url": "{{base_url}}/bookings/1/status?status=ACCEPTED" } },
+
+        { "name": "Customer Bookings", "request": { "method": "GET", "url": "{{base_url}}/bookings/customer?page=0&size=10" } },
+
+        { "name": "Provider Bookings", "request": { "method": "GET", "url": "{{base_url}}/bookings/provider?page=0&size=10" } }
+
       ]
     },
+
     {
-      "name": "Addresses",
+      "name": "PAYMENTS",
       "item": [
-        {
-          "name": "Add Address",
-          "request": {
-            "method": "POST",
-            "header": [{"key": "Content-Type", "value": "application/json"}],
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"addressLine\": \"123 Main Street\",\n  \"city\": \"Mumbai\",\n  \"state\": \"Maharashtra\",\n  \"pincode\": \"400001\",\n  \"isDefault\": true\n}"
-            },
-            "url": {
-              "raw": "{{base_url}}/customer/addresses",
-              "host": ["{{base_url}}"],
-              "path": ["customer", "addresses"]
-            }
-          }
-        },
-        {
-          "name": "Get All Addresses",
-          "request": {
-            "method": "GET",
-            "header": [],
-            "url": {
-              "raw": "{{base_url}}/customer/addresses",
-              "host": ["{{base_url}}"],
-              "path": ["customer", "addresses"]
-            }
-          }
-        },
-        {
-          "name": "Update Address",
-          "request": {
-            "method": "PUT",
-            "header": [{"key": "Content-Type", "value": "application/json"}],
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"city\": \"Delhi\",\n  \"pincode\": \"110001\"\n}"
-            },
-            "url": {
-              "raw": "{{base_url}}/customer/addresses/1",
-              "host": ["{{base_url}}"],
-              "path": ["customer", "addresses", "1"]
-            }
-          }
-        },
-        {
-          "name": "Delete Address",
-          "request": {
-            "method": "DELETE",
-            "header": [],
-            "url": {
-              "raw": "{{base_url}}/customer/addresses/1",
-              "host": ["{{base_url}}"],
-              "path": ["customer", "addresses", "1"]
-            }
-          }
-        }
+        { "name": "Record Payment", "request": { "method": "POST", "header": [{ "key": "Content-Type", "value": "application/json" }], "body": { "mode": "raw", "raw": "{\n  \"bookingId\": 1,\n  \"method\": \"CASH\"\n}" }, "url": "{{base_url}}/payments" } },
+        { "name": "Mark Complete", "request": { "method": "PUT", "url": "{{base_url}}/payments/1/complete" } },
+        { "name": "Payment History", "request": { "method": "GET", "url": "{{base_url}}/payments/history?page=0&size=10" } }
       ]
     },
+
     {
-      "name": "Payments",
+      "name": "RATINGS",
+      "item": [
+        { "name": "Submit Rating", "request": { "method": "POST", "header": [{ "key": "Content-Type", "value": "application/json" }], "body": { "mode": "raw", "raw": "{\n  \"bookingId\": 1,\n  \"stars\": 5,\n  \"comment\": \"Excellent service\"\n}" }, "url": "{{base_url}}/ratings" } },
+        { "name": "Provider Ratings", "request": { "method": "GET", "url": "{{base_url}}/ratings/provider/1?page=0&size=10" } }
+      ]
+    },
+
+    {
+      "name": "NOTIFICATIONS",
+      "item": [
+        { "name": "Get Notifications", "request": { "method": "GET", "url": "{{base_url}}/notifications?page=0&size=10" } },
+        { "name": "Mark Read", "request": { "method": "PUT", "url": "{{base_url}}/notifications/1/read" } }
+      ]
+    },
+
+    {
+      "name": "PROVIDER",
       "item": [
         {
-          "name": "Record Payment",
-          "request": {
-            "method": "POST",
-            "header": [{"key": "Content-Type", "value": "application/json"}],
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"bookingId\": 1,\n  \"method\": \"CASH\"\n}"
-            },
-            "url": {
-              "raw": "{{base_url}}/payments",
-              "host": ["{{base_url}}"],
-              "path": ["payments"]
-            }
-          }
-        },
-        {
-          "name": "Mark Payment Complete",
+          "name": "Update Provider Profile (Multipart)",
           "request": {
             "method": "PUT",
-            "header": [],
-            "url": {
-              "raw": "{{base_url}}/payments/1/complete",
-              "host": ["{{base_url}}"],
-              "path": ["payments", "1", "complete"]
-            }
-          }
-        },
-        {
-          "name": "Get Payment History",
-          "request": {
-            "method": "GET",
-            "header": [],
-            "url": {
-              "raw": "{{base_url}}/payments/history?page=0&size=10",
-              "host": ["{{base_url}}"],
-              "path": ["payments", "history"],
-              "query": [
-                {"key": "page", "value": "0"},
-                {"key": "size", "value": "10"}
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                { "key": "documentFile", "type": "file", "src": "" },
+                { "key": "selectedServices", "value": "1,2", "type": "text" }
               ]
-            }
-          }
-        }
-      ]
-    },
-    {
-      "name": "Ratings & Reviews",
-      "item": [
-        {
-          "name": "Submit Rating",
-          "request": {
-            "method": "POST",
-            "header": [{"key": "Content-Type", "value": "application/json"}],
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"bookingId\": 1,\n  \"stars\": 5,\n  \"comment\": \"Excellent service!\"\n}"
             },
-            "url": {
-              "raw": "{{base_url}}/ratings",
-              "host": ["{{base_url}}"],
-              "path": ["ratings"]
-            }
+            "url": "{{base_url}}/provider/profile"
           }
         },
-        {
-          "name": "Get Provider Ratings",
-          "request": {
-            "method": "GET",
-            "header": [],
-            "url": {
-              "raw": "{{base_url}}/ratings/provider/1?page=0&size=10",
-              "host": ["{{base_url}}"],
-              "path": ["ratings", "provider", "1"],
-              "query": [
-                {"key": "page", "value": "0"},
-                {"key": "size", "value": "10"}
-              ]
-            }
-          }
-        }
+        { "name": "Update Status", "request": { "method": "PUT", "url": "{{base_url}}/provider/status?status=ONLINE" } },
+        { "name": "Approve Provider", "request": { "method": "PUT", "url": "{{base_url}}/provider/1/approve" } },
+        { "name": "Reject Provider", "request": { "method": "PUT", "url": "{{base_url}}/provider/1/reject" } },
+        { "name": "Pending Providers", "request": { "method": "GET", "url": "{{base_url}}/provider/pending?page=0&size=10" } }
       ]
     },
+
     {
-      "name": "Notifications",
+      "name": "ADMIN",
       "item": [
-        {
-          "name": "Get Notifications",
-          "request": {
-            "method": "GET",
-            "header": [],
-            "url": {
-              "raw": "{{base_url}}/notifications?page=0&size=10",
-              "host": ["{{base_url}}"],
-              "path": ["notifications"],
-              "query": [
-                {"key": "page", "value": "0"},
-                {"key": "size", "value": "10"}
-              ]
-            }
-          }
-        },
-        {
-          "name": "Mark as Read",
-          "request": {
-            "method": "PUT",
-            "header": [],
-            "url": {
-              "raw": "{{base_url}}/notifications/1/read",
-              "host": ["{{base_url}}"],
-              "path": ["notifications", "1", "read"]
-            }
-          }
-        }
-      ]
-    },
-    {
-      "name": "Provider",
-      "item": [
-        {
-          "name": "Update Provider Profile",
-          "request": {
-            "method": "PUT",
-            "header": [{"key": "Content-Type", "value": "application/json"}],
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"documents\": \"license.pdf,certificate.pdf\",\n  \"selectedServices\": \"Plumbing,Electrical\"\n}"
-            },
-            "url": {
-              "raw": "{{base_url}}/provider/profile",
-              "host": ["{{base_url}}"],
-              "path": ["provider", "profile"]
-            }
-          }
-        },
-        {
-          "name": "Update Provider Status",
-          "request": {
-            "method": "PUT",
-            "header": [],
-            "url": {
-              "raw": "{{base_url}}/provider/status?status=ONLINE",
-              "host": ["{{base_url}}"],
-              "path": ["provider", "status"],
-              "query": [{"key": "status", "value": "ONLINE"}]
-            }
-          }
-        },
-        {
-          "name": "Approve Provider (Admin)",
-          "request": {
-            "method": "PUT",
-            "header": [],
-            "url": {
-              "raw": "{{base_url}}/provider/1/approve",
-              "host": ["{{base_url}}"],
-              "path": ["provider", "1", "approve"]
-            }
-          }
-        },
-        {
-          "name": "Reject Provider (Admin)",
-          "request": {
-            "method": "PUT",
-            "header": [],
-            "url": {
-              "raw": "{{base_url}}/provider/1/reject",
-              "host": ["{{base_url}}"],
-              "path": ["provider", "1", "reject"]
-            }
-          }
-        },
-        {
-          "name": "Get Pending Providers (Admin)",
-          "request": {
-            "method": "GET",
-            "header": [],
-            "url": {
-              "raw": "{{base_url}}/provider/pending?page=0&size=10",
-              "host": ["{{base_url}}"],
-              "path": ["provider", "pending"],
-              "query": [
-                {"key": "page", "value": "0"},
-                {"key": "size", "value": "10"}
-              ]
-            }
-          }
-        }
-      ]
-    },
-    {
-      "name": "Admin",
-      "item": [
-        {
-          "name": "Get Dashboard Stats",
-          "request": {
-            "method": "GET",
-            "header": [],
-            "url": {
-              "raw": "{{base_url}}/admin/dashboard",
-              "host": ["{{base_url}}"],
-              "path": ["admin", "dashboard"]
-            }
-          }
-        },
-        {
-          "name": "Get Monthly Report",
-          "request": {
-            "method": "GET",
-            "header": [],
-            "url": {
-              "raw": "{{base_url}}/admin/reports/monthly",
-              "host": ["{{base_url}}"],
-              "path": ["admin", "reports", "monthly"]
-            }
-          }
-        }
+        { "name": "Dashboard", "request": { "method": "GET", "url": "{{base_url}}/admin/dashboard" } },
+        { "name": "Monthly Report", "request": { "method": "GET", "url": "{{base_url}}/admin/reports/monthly" } }
       ]
     }
+
   ]
 }

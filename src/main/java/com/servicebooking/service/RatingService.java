@@ -16,8 +16,8 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.List;
 import java.util.Map;
-
 @Service
 public class RatingService {
 
@@ -30,14 +30,17 @@ public class RatingService {
     @Autowired
     private ProviderProfileRepository providerProfileRepository;
 
+    // ================= SUBMIT RATING =================
     @Transactional
     public ApiResponse<Rating> submitRating(Map<String, Object> request) {
+
         Long bookingId = Long.valueOf(request.get("bookingId").toString());
+
         Booking booking = bookingRepository.findById(bookingId)
                 .orElseThrow(() -> new ResourceNotFoundException("Booking not found"));
 
         if (booking.getProvider() == null) {
-            throw new ResourceNotFoundException("No provider assigned to this booking");
+            throw new ResourceNotFoundException("No provider assigned");
         }
 
         Rating rating = new Rating();
@@ -46,25 +49,86 @@ public class RatingService {
         rating.setStars(Integer.valueOf(request.get("stars").toString()));
         rating.setComment(request.getOrDefault("comment", "").toString());
 
-        rating = ratingRepository.save(rating);
+        ratingRepository.save(rating);
 
-        // Update provider's average rating
         updateProviderRating(booking.getProvider().getId());
 
-        return ApiResponse.success("Rating submitted successfully", rating);
+        return ApiResponse.success("Rating submitted", rating);
     }
 
+    // ================= UPDATE AVG =================
     private void updateProviderRating(Long providerId) {
-        Double avgRating = ratingRepository.getAverageRatingForProvider(providerId);
+
+        Double avg = ratingRepository.getAverageRatingForProvider(providerId);
+
         ProviderProfile provider = providerProfileRepository.findById(providerId)
                 .orElseThrow(() -> new ResourceNotFoundException("Provider not found"));
-        provider.setRating(avgRating != null ? avgRating : 0.0);
+
+        provider.setRating(avg != null ? avg : 0.0);
+
         providerProfileRepository.save(provider);
     }
 
-    public ApiResponse<PageResponse<Rating>> getProviderRatings(Long providerId, int page, int size) {
+    // ================= GET ALL RATINGS =================
+    public ApiResponse<PageResponse<Rating>> getProviderRatings(
+            Long providerId, int page, int size) {
+
         Pageable pageable = PageRequest.of(page, size);
-        Page<Rating> ratingPage = ratingRepository.findByProviderId(providerId, pageable);
+
+        Page<Rating> ratingPage =
+                ratingRepository.findByProviderId(providerId, pageable);
+
+        return buildPageResponse(ratingPage, "Ratings fetched");
+    }
+
+    // ================= AVERAGE =================
+    public ApiResponse<Double> getAverageRating(Long providerId) {
+
+        Double avg =
+                ratingRepository.getAverageRatingForProvider(providerId);
+
+        return ApiResponse.success(
+                "Average rating",
+                avg != null ? avg : 0.0
+        );
+    }
+
+    // ================= LOW RATINGS =================
+    public ApiResponse<PageResponse<Rating>> getLowRatings(
+            Long providerId, int page, int size) {
+
+        Pageable pageable = PageRequest.of(page, size);
+
+        Page<Rating> ratingPage =
+                ratingRepository.findByProviderIdAndStarsIn(
+                        providerId,
+                        List.of(1,2,3),
+                        pageable
+                );
+
+        return buildPageResponse(ratingPage, "Low ratings fetched");
+    }
+
+    // ================= TOP RATINGS =================
+    public ApiResponse<PageResponse<Rating>> getTopRatings(
+            Long providerId, int page, int size) {
+
+        Pageable pageable = PageRequest.of(page, size);
+
+        Page<Rating> ratingPage =
+                ratingRepository.findByProviderIdAndStarsGreaterThanEqual(
+                        providerId,
+                        4,
+                        pageable
+                );
+
+        return buildPageResponse(ratingPage, "Top ratings fetched");
+    }
+
+    // ================= COMMON PAGE BUILDER =================
+    private ApiResponse<PageResponse<Rating>> buildPageResponse(
+            Page<Rating> ratingPage,
+            String message) {
 
         PageResponse<Rating> response = new PageResponse<>(
                 ratingPage.getContent(),
@@ -75,6 +139,6 @@ public class RatingService {
                 ratingPage.isLast()
         );
 
-        return ApiResponse.success("Ratings fetched successfully", response);
+        return ApiResponse.success(message, response);
     }
 }

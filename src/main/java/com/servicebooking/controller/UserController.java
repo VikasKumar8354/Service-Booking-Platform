@@ -23,27 +23,47 @@ public class UserController {
     @Autowired
     private UserService userService;
 
+    // ================= GET PROFILE =================
     @GetMapping("/profile")
-    @Operation(summary = "Get current user profile")
+    @PreAuthorize("hasAnyRole('USER','ADMIN','PROVIDER')")
+    @Operation(
+            summary = "Get current user profile",
+            description = "Returns the profile details of the currently logged-in user"
+    )
     public ResponseEntity<ApiResponse<User>> getProfile() {
         return ResponseEntity.ok(userService.getProfile());
     }
 
+    // ================= UPDATE PROFILE =================
     @PutMapping("/profile")
-    @Operation(summary = "Update current user profile")
-    public ResponseEntity<ApiResponse<User>> updateProfile(@RequestBody Map<String, String> updates) {
+    @PreAuthorize("hasAnyRole('USER','ADMIN','PROVIDER')")
+    @Operation(
+            summary = "Update current user profile",
+            description = "Allows logged-in users to update their profile fields like name, phone, etc."
+    )
+    public ResponseEntity<ApiResponse<User>> updateProfile(
+            @RequestBody Map<String, String> updates) {
         return ResponseEntity.ok(userService.updateProfile(updates));
     }
 
+    // ================= DELETE ACCOUNT =================
     @DeleteMapping("/account")
-    @Operation(summary = "Delete current user account")
+    @PreAuthorize("hasAnyRole('USER','ADMIN','PROVIDER')")
+    @Operation(
+            summary = "Delete user account",
+            description = "Deletes the account of the currently logged-in user"
+    )
     public ResponseEntity<ApiResponse<String>> deleteAccount() {
         return ResponseEntity.ok(userService.deleteAccount());
     }
 
+    // ================= GET ALL USERS (ADMIN) =================
     @GetMapping
     @PreAuthorize("hasRole('ADMIN')")
-    @Operation(summary = "Get all users (Admin only)")
+    @Operation(
+            summary = "Get all users (Admin only)",
+            description = "Fetch paginated list of all users. Accessible only by ADMIN"
+    )
     public ResponseEntity<ApiResponse<PageResponse<User>>> getAllUsers(
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size) {

@@ -3,6 +3,7 @@ package com.servicebooking.controller;
 import com.servicebooking.dto.response.ApiResponse;
 import com.servicebooking.entity.CustomerProfile;
 import com.servicebooking.service.CustomerProfileService;
+import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -13,25 +14,33 @@ import org.springframework.web.multipart.MultipartFile;
 
 @RestController
 @RequestMapping("/api/customer")
-@Tag(name = "Customer Profile")
+@Tag(name = "Customer Profile", description = "Customer profile management APIs")
 @SecurityRequirement(name = "bearerAuth")
 public class CustomerProfileController {
 
     @Autowired
     private CustomerProfileService service;
 
-    // ✅ Get Profile
+    // ================= GET PROFILE =================
     @GetMapping("/profile")
     @PreAuthorize("hasRole('CUSTOMER')")
+    @Operation(
+            summary = "Get customer profile",
+            description = "Fetch the profile details of the logged-in customer"
+    )
     public ResponseEntity<ApiResponse<CustomerProfile>> getProfile() {
         return ResponseEntity.ok(
                 ApiResponse.success("Profile fetched", service.getMyProfile())
         );
     }
 
-    // ✅ Update Profile (email + image BLOB)
+    // ================= UPDATE PROFILE =================
     @PutMapping(value = "/profile", consumes = "multipart/form-data")
     @PreAuthorize("hasRole('CUSTOMER')")
+    @Operation(
+            summary = "Update customer profile",
+            description = "Update customer email and/or profile image"
+    )
     public ResponseEntity<ApiResponse<CustomerProfile>> updateProfile(
             @RequestParam(required = false) String email,
             @RequestParam(required = false) MultipartFile imageFile) {
@@ -44,9 +53,13 @@ public class CustomerProfileController {
         );
     }
 
-    // ✅ Download Profile Image
+    // ================= DOWNLOAD IMAGE =================
     @GetMapping("/profile/image")
     @PreAuthorize("hasRole('CUSTOMER')")
+    @Operation(
+            summary = "Download profile image",
+            description = "Download the customer's profile image"
+    )
     public ResponseEntity<byte[]> downloadImage() {
 
         CustomerProfile profile = service.getProfileWithImage();
@@ -58,11 +71,17 @@ public class CustomerProfileController {
                 .body(profile.getProfileImageData());
     }
 
-    // ✅ Delete Profile
+    // ================= DELETE PROFILE =================
     @DeleteMapping("/profile")
     @PreAuthorize("hasRole('CUSTOMER')")
+    @Operation(
+            summary = "Delete customer profile",
+            description = "Delete the logged-in customer's profile permanently"
+    )
     public ResponseEntity<ApiResponse<String>> deleteProfile() {
         service.deleteProfile();
-        return ResponseEntity.ok(ApiResponse.success("Profile deleted", null));
+        return ResponseEntity.ok(
+                ApiResponse.success("Profile deleted", null)
+        );
     }
 }
