@@ -25,7 +25,6 @@ public class UserService {
     @Autowired
     private PasswordEncoder passwordEncoder;
 
-    // ✅ FIXED HERE
     public User getCurrentUser() {
 
         String email = SecurityContextHolder

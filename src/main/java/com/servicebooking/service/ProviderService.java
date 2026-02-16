@@ -3,10 +3,12 @@ package com.servicebooking.service;
 import com.servicebooking.dto.response.ApiResponse;
 import com.servicebooking.dto.response.PageResponse;
 import com.servicebooking.dto.response.ProviderProfileResponseDTO;
+import com.servicebooking.entity.Booking;
 import com.servicebooking.entity.ProviderProfile;
 import com.servicebooking.entity.User;
 import com.servicebooking.enums.ProviderStatus;
 import com.servicebooking.exception.ResourceNotFoundException;
+import com.servicebooking.repository.BookingRepository;
 import com.servicebooking.repository.ProviderProfileRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
@@ -15,6 +17,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.math.BigDecimal;
+
 @Service
 public class ProviderService {
 
@@ -22,13 +26,15 @@ public class ProviderService {
     private ProviderProfileRepository providerRepository;
 
     @Autowired
+    private BookingRepository bookingRepository;
+
+    @Autowired
     private UserService userService;
 
     @Autowired
     private NotificationService notificationService;
 
-
-    // ✅ BLOB upload version
+    // ✅ Update profile (document + services)
     @Transactional
     public ApiResponse<ProviderProfileResponseDTO> updateProfile(
             MultipartFile documentFile,
@@ -71,18 +77,14 @@ public class ProviderService {
         );
     }
 
-
-
-    // ✅ download helper
+    // ✅ Download provider document
     public ProviderProfile getProviderDocument() {
         User user = userService.getCurrentUser();
         return providerRepository.findByUser(user)
                 .orElseThrow(() -> new ResourceNotFoundException("Provider profile not found"));
     }
 
-
-    // ===== YOUR EXISTING METHODS (unchanged) =====
-
+    // ✅ Update availability status
     @Transactional
     public ApiResponse<ProviderProfileResponseDTO> updateStatus(ProviderStatus status) {
 
@@ -92,7 +94,6 @@ public class ProviderService {
                 .orElseThrow(() -> new ResourceNotFoundException("Provider profile not found"));
 
         provider.setStatus(status);
-
         providerRepository.save(provider);
 
         return ApiResponse.success(
@@ -101,7 +102,7 @@ public class ProviderService {
         );
     }
 
-
+    // ✅ Admin approve provider
     @Transactional
     public ApiResponse<ProviderProfileResponseDTO> approveProvider(Long id) {
 
@@ -120,7 +121,7 @@ public class ProviderService {
         return ApiResponse.success("Approved", toDTO(profile));
     }
 
-
+    // ✅ Admin reject provider
     @Transactional
     public ApiResponse<ProviderProfileResponseDTO> rejectProvider(Long id) {
 
@@ -139,7 +140,7 @@ public class ProviderService {
         return ApiResponse.success("Rejected", toDTO(profile));
     }
 
-
+    // ✅ Get pending providers for admin
     public ApiResponse<PageResponse<ProviderProfileResponseDTO>> getPendingProviders(int page, int size) {
 
         Page<ProviderProfile> profiles = providerRepository.findByStatus(
@@ -157,6 +158,23 @@ public class ProviderService {
                 );
 
         return ApiResponse.success("Fetched", response);
+    }
+
+    // ✅ Update provider completed jobs & earnings on booking complete
+    @Transactional
+    public void updateProviderStatsOnBookingComplete(Booking booking) {
+
+        ProviderProfile provider = booking.getProvider();
+        if (provider == null) return;
+
+        // Update completed jobs
+        provider.setCompletedJobs(provider.getCompletedJobs() + 1);
+
+        // Update total earnings
+        BigDecimal amount = booking.getAmount() == null ? BigDecimal.ZERO : booking.getAmount();
+        provider.setTotalEarnings(provider.getTotalEarnings().add(amount));
+
+        providerRepository.save(provider);
     }
 
     private ProviderProfileResponseDTO toDTO(ProviderProfile profile) {

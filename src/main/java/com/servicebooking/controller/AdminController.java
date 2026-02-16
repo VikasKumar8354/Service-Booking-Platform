@@ -16,7 +16,7 @@ import java.util.Map;
 @RequestMapping("/api/admin")
 @Tag(name = "Admin", description = "Admin management and analytics APIs")
 @SecurityRequirement(name = "bearerAuth")
-@PreAuthorize("hasRole('ADMIN')") // applies to all endpoints
+@PreAuthorize("hasRole('ADMIN')")
 public class AdminController {
 
     @Autowired

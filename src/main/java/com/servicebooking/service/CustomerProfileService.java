@@ -1,5 +1,6 @@
 package com.servicebooking.service;
 
+import com.servicebooking.dto.response.CustomerProfileResponseDTO;
 import com.servicebooking.entity.CustomerProfile;
 import com.servicebooking.entity.User;
 import com.servicebooking.repository.CustomerProfileRepository;
@@ -25,7 +26,8 @@ public class CustomerProfileService {
     }
 
     // ✅ Update profile with email + optional image
-    public CustomerProfile updateProfile(String email, MultipartFile imageFile) {
+    public CustomerProfileResponseDTO updateProfile(String email, MultipartFile imageFile) {
+
         try {
             User user = userService.getCurrentUser();
 
@@ -33,7 +35,12 @@ public class CustomerProfileService {
                     .orElse(new CustomerProfile());
 
             profile.setUser(user);
-            profile.setEmail(email);
+
+            // ✅ Update email only if provided
+            if (email != null && !email.isBlank()) {
+                profile.setEmail(email);
+                user.setEmail(email); // optional if user email also needs update
+            }
 
             // ✅ If image uploaded
             if (imageFile != null && !imageFile.isEmpty()) {
@@ -42,10 +49,20 @@ public class CustomerProfileService {
                 profile.setImageType(imageFile.getContentType());
             }
 
-            return repository.save(profile);
+            CustomerProfile savedProfile = repository.save(profile);
 
-        } catch (Exception exception) {
-            throw new RuntimeException("Image upload failed: " + exception.getMessage());
+            // ✅ Convert Entity → DTO
+            return CustomerProfileResponseDTO.builder()
+                    .id(savedProfile.getId())
+                    .name(user.getName())
+                    .email(user.getEmail())
+                    .mobileNumber(user.getMobileNumber())
+                    .imageName(savedProfile.getImageName())
+                    .imageUrl("/api/customer/profile/image")
+                    .build();
+
+        } catch (Exception e) {
+            throw new RuntimeException("Profile update failed: " + e.getMessage());
         }
     }
 

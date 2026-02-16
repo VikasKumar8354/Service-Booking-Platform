@@ -2,7 +2,7 @@ package com.servicebooking.controller;
 
 import com.servicebooking.dto.response.ApiResponse;
 import com.servicebooking.dto.response.PageResponse;
-import com.servicebooking.entity.Rating;
+import com.servicebooking.dto.response.RatingResponseDTO;
 import com.servicebooking.service.RatingService;
 
 import io.swagger.v3.oas.annotations.Operation;
@@ -32,7 +32,7 @@ public class RatingController {
             summary = "Submit Rating",
             description = "Logged-in customer submits rating & review for a completed booking"
     )
-    public ResponseEntity<ApiResponse<Rating>> submitRating(
+    public ResponseEntity<ApiResponse<RatingResponseDTO>> submitRating(
             @RequestBody Map<String, Object> request) {
 
         return ResponseEntity.ok(
@@ -47,10 +47,10 @@ public class RatingController {
             summary = "Get Provider Ratings",
             description = "Fetch all ratings for a provider with pagination"
     )
-    public ResponseEntity<ApiResponse<PageResponse<Rating>>> getProviderRatings(
+    public ResponseEntity<ApiResponse<PageResponse<RatingResponseDTO>>> getProviderRatings(
             @PathVariable Long providerId,
-            @RequestParam(defaultValue="0") int page,
-            @RequestParam(defaultValue="10") int size) {
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size) {
 
         return ResponseEntity.ok(
                 ratingService.getProviderRatings(providerId, page, size)
@@ -79,10 +79,10 @@ public class RatingController {
             summary = "Get Low Ratings",
             description = "Fetch low ratings (1-3 stars) for a provider"
     )
-    public ResponseEntity<ApiResponse<PageResponse<Rating>>> getLowRatings(
+    public ResponseEntity<ApiResponse<PageResponse<RatingResponseDTO>>> getLowRatings(
             @PathVariable Long providerId,
-            @RequestParam(defaultValue="0") int page,
-            @RequestParam(defaultValue="10") int size) {
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size) {
 
         return ResponseEntity.ok(
                 ratingService.getLowRatings(providerId, page, size)
@@ -96,10 +96,10 @@ public class RatingController {
             summary = "Get Top Ratings",
             description = "Fetch top ratings (4-5 stars) for a provider"
     )
-    public ResponseEntity<ApiResponse<PageResponse<Rating>>> getTopRatings(
+    public ResponseEntity<ApiResponse<PageResponse<RatingResponseDTO>>> getTopRatings(
             @PathVariable Long providerId,
-            @RequestParam(defaultValue="0") int page,
-            @RequestParam(defaultValue="10") int size) {
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size) {
 
         return ResponseEntity.ok(
                 ratingService.getTopRatings(providerId, page, size)

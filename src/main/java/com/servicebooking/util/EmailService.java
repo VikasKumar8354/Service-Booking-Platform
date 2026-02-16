@@ -11,8 +11,6 @@ public class EmailService {
 
     @Autowired
     private JavaMailSender mailSender;
-
-    // ✅ Take sender email from properties
     @Value("${spring.mail.username}")
     private String fromEmail;
 
@@ -20,7 +18,7 @@ public class EmailService {
 
         SimpleMailMessage msg = new SimpleMailMessage();
 
-        msg.setFrom(fromEmail); // ✅ VERY IMPORTANT
+        msg.setFrom(fromEmail);
         msg.setTo(to);
         msg.setSubject(subject);
         msg.setText(content);

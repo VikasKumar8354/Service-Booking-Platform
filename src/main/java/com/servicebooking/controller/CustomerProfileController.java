@@ -1,6 +1,7 @@
 package com.servicebooking.controller;
 
 import com.servicebooking.dto.response.ApiResponse;
+import com.servicebooking.dto.response.CustomerProfileResponseDTO;
 import com.servicebooking.entity.CustomerProfile;
 import com.servicebooking.service.CustomerProfileService;
 import io.swagger.v3.oas.annotations.Operation;
@@ -41,7 +42,7 @@ public class CustomerProfileController {
             summary = "Update customer profile",
             description = "Update customer email and/or profile image"
     )
-    public ResponseEntity<ApiResponse<CustomerProfile>> updateProfile(
+    public ResponseEntity<ApiResponse<CustomerProfileResponseDTO>> updateProfile(
             @RequestParam(required = false) String email,
             @RequestParam(required = false) MultipartFile imageFile) {
 
