@@ -35,7 +35,6 @@ public class AddressService {
                 .orElseThrow(() ->
                         new ResourceNotFoundException("Customer profile not found"));
 
-        // DTO -> Entity mapping
         Address address = new Address();
         address.setCustomer(customer);
         address.setAddressLine(request.getAddressLine());
@@ -43,7 +42,6 @@ public class AddressService {
         address.setState(request.getState());
         address.setPincode(request.getPincode());
 
-        // Default logic
         if (Boolean.TRUE.equals(request.getIsDefault())) {
             clearDefaultAddresses(customer);
             address.setIsDefault(true);
@@ -90,14 +88,12 @@ public class AddressService {
                 .orElseThrow(() ->
                         new ResourceNotFoundException("Address not found"));
 
-        // Ownership check
         if (!Objects.equals(
                 address.getCustomer().getUser().getId(),
                 currentUser.getId())) {
             throw new RuntimeException("Not allowed to update this address");
         }
 
-        // Update fields
         address.setAddressLine(request.getAddressLine());
         address.setCity(request.getCity());
         address.setState(request.getState());

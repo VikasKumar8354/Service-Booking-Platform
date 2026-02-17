@@ -15,7 +15,9 @@ import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 
 @Service
@@ -35,7 +37,6 @@ public class BookingService {
 
     @Autowired
     private UserService userService;
-
 
     // ================= CREATE BOOKING =================
     @Transactional
@@ -75,7 +76,6 @@ public class BookingService {
 
         booking.setProvider(provider);
         booking.setProviderName(provider.getUser().getName());
-
         booking.setStatus(BookingStatus.ACCEPTED);
 
         bookingRepository.save(booking);
@@ -91,15 +91,13 @@ public class BookingService {
         CustomerProfile customer = customerRepo.findByUser(user)
                 .orElseThrow(() -> new ResourceNotFoundException("Customer profile not found"));
 
-        Page<Booking> bookingPage =
-                bookingRepository.findByCustomer(
-                        customer,
-                        PageRequest.of(page, size, Sort.by("createdAt").descending())
-                );
+        Page<Booking> bookingPage = bookingRepository.findByCustomer(
+                customer,
+                PageRequest.of(page, size, Sort.by("createdAt").descending())
+        );
 
         return ApiResponse.success("Bookings fetched", mapPage(bookingPage));
     }
-
 
     // ================= PROVIDER BOOKINGS =================
     public ApiResponse<PageResponse<BookingResponseDTO>> getProviderBookings(int page, int size) {
@@ -109,15 +107,13 @@ public class BookingService {
         ProviderProfile provider = providerRepo.findByUser(user)
                 .orElseThrow(() -> new ResourceNotFoundException("Provider profile not found"));
 
-        Page<Booking> bookingPage =
-                bookingRepository.findByProvider(
-                        provider,
-                        PageRequest.of(page, size, Sort.by("createdAt").descending())
-                );
+        Page<Booking> bookingPage = bookingRepository.findByProvider(
+                provider,
+                PageRequest.of(page, size, Sort.by("createdAt").descending())
+        );
 
         return ApiResponse.success("Bookings fetched", mapPage(bookingPage));
     }
-
 
     // ================= UPDATE STATUS =================
     @Transactional
@@ -132,6 +128,18 @@ public class BookingService {
         return ApiResponse.success("Status updated", mapToDTO(booking));
     }
 
+    // ================= CANCEL BOOKING =================
+    @Transactional
+    public ApiResponse<String> cancelBooking(Long id) {
+
+        Booking booking = bookingRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Booking not found"));
+
+        booking.setStatus(BookingStatus.CANCELLED);
+        bookingRepository.save(booking);
+
+        return ApiResponse.success("Booking cancelled successfully", null);
+    }
 
     // ================= FILTER BOOKINGS =================
     public ApiResponse<PageResponse<BookingResponseDTO>> filterBookings(
@@ -167,57 +175,95 @@ public class BookingService {
             return cb.and(predicates.toArray(new Predicate[0]));
         };
 
-        Page<Booking> result =
-                bookingRepository.findAll(
-                        spec,
-                        PageRequest.of(page, size, Sort.by("createdAt").descending())
-                );
+        Page<Booking> result = bookingRepository.findAll(
+                spec,
+                PageRequest.of(page, size, Sort.by("createdAt").descending())
+        );
 
         return ApiResponse.success("Filtered bookings", mapPage(result));
     }
 
+    // ================= BY CUSTOMER ID =================
+    public ApiResponse<PageResponse<BookingResponseDTO>> getBookingsByCustomerId(
+            Long customerId, int page, int size) {
 
-    // ================= CANCEL BOOKING =================
-    @Transactional
-    public ApiResponse<String> cancelBooking(Long id) {
+        Page<Booking> bookingPage = bookingRepository.findByCustomerId(
+                customerId,
+                PageRequest.of(page, size, Sort.by("createdAt").descending())
+        );
 
-        Booking booking = bookingRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Booking not found"));
-
-        booking.setStatus(BookingStatus.CANCELLED);
-        bookingRepository.save(booking);
-
-        return ApiResponse.success("Booking cancelled successfully", null);
+        return ApiResponse.success("Customer bookings fetched", mapPage(bookingPage));
     }
 
+    // ================= BY PROVIDER ID =================
+    public ApiResponse<PageResponse<BookingResponseDTO>> getBookingsByProviderId(
+            Long providerId, int page, int size) {
+
+        Page<Booking> bookingPage = bookingRepository.findByProviderId(
+                providerId,
+                PageRequest.of(page, size, Sort.by("createdAt").descending())
+        );
+
+        return ApiResponse.success("Provider bookings fetched", mapPage(bookingPage));
+    }
+
+    // ================= BY STATUS =================
+    public ApiResponse<PageResponse<BookingResponseDTO>> getBookingsByStatus(
+            BookingStatus status, int page, int size) {
+
+        Page<Booking> bookingPage = bookingRepository.findByStatus(
+                status,
+                PageRequest.of(page, size, Sort.by("createdAt").descending())
+        );
+
+        return ApiResponse.success("Bookings by status fetched", mapPage(bookingPage));
+    }
+
+    // ================= COUNT BY STATUS =================
+    public ApiResponse<Long> countBookingsByStatus(BookingStatus status) {
+
+        Long count = bookingRepository.countByStatus(status);
+
+        return ApiResponse.success("Booking count fetched", count);
+    }
+
+    // ================= BETWEEN DATES =================
+    public ApiResponse<List<BookingResponseDTO>> getBookingsBetweenDates(
+            LocalDateTime start,
+            LocalDateTime end) {
+
+        List<Booking> bookings =
+                bookingRepository.findBookingsBetweenDates(start, end);
+
+        List<BookingResponseDTO> dtos =
+                bookings.stream().map(this::mapToDTO).toList();
+
+        return ApiResponse.success("Bookings between dates fetched", dtos);
+    }
 
     // ================= DTO MAPPING =================
     private BookingResponseDTO mapToDTO(Booking b) {
 
         return BookingResponseDTO.builder()
                 .bookingId(b.getId())
-
                 .customer(CustomerDTO.builder()
                         .id(b.getCustomer().getId())
                         .name(b.getCustomer().getUser().getName())
                         .email(b.getCustomer().getUser().getEmail())
                         .mobile(b.getCustomer().getUser().getMobileNumber())
                         .build())
-
                 .provider(b.getProvider() == null ? null :
                         ProviderDTO.builder()
                                 .id(b.getProvider().getId())
                                 .name(b.getProvider().getUser().getName())
                                 .rating(b.getProvider().getRating())
                                 .build())
-
                 .service(ServiceDTO.builder()
                         .id(b.getService().getId())
                         .name(b.getService().getName())
                         .category(b.getService().getCategory().getName())
                         .price(b.getService().getBasePrice())
                         .build())
-
                 .bookingDateTime(b.getBookingDateTime())
                 .location(b.getLocation())
                 .status(b.getStatus())
@@ -225,7 +271,6 @@ public class BookingService {
                 .createdAt(b.getCreatedAt())
                 .build();
     }
-
 
     private PageResponse<BookingResponseDTO> mapPage(Page<Booking> page) {
 
