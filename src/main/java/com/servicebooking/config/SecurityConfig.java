@@ -2,7 +2,6 @@ package com.servicebooking.config;
 
 import com.servicebooking.security.CustomUserDetailsService;
 import com.servicebooking.security.JwtAuthenticationFilter;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.authentication.AuthenticationManager;

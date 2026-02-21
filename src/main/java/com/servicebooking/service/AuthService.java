@@ -143,7 +143,6 @@ public class AuthService {
     // ================= RESET PASSWORD =================
     @Transactional
     public ApiResponse<String> resetPassword(ResetPasswordRequest request) {
-
         String email = request.getEmail().trim().toLowerCase();
 
         User user = userRepository.findByEmailIgnoreCase(email)
