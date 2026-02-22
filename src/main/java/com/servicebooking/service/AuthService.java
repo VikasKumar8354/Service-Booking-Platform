@@ -161,6 +161,7 @@ public class AuthService {
     }
 
     // ================= LOGOUT =================
+
     public ApiResponse<String> logout() {
         return ApiResponse.success("Logout successful");
     }
