@@ -34,6 +34,7 @@ public class UserController {
         return ResponseEntity.ok(userService.getProfile());
     }
 
+
     // ================= UPDATE PROFILE =================
     @PutMapping("/profile")
     @PreAuthorize("hasAnyRole('USER','ADMIN','PROVIDER')")
