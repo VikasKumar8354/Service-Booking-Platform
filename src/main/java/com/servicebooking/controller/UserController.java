@@ -46,7 +46,6 @@ public class UserController {
             @RequestBody Map<String, String> updates) {
         return ResponseEntity.ok(userService.updateProfile(updates));
     }
-
     // ================= DELETE ACCOUNT =================
     @DeleteMapping("/account")
     @PreAuthorize("hasAnyRole('USER','ADMIN','PROVIDER')")
