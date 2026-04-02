@@ -36,7 +36,6 @@ public class RatingController {
             @RequestBody Map<String, Object> request) {
 
         return ResponseEntity.ok(
-
                 ratingService.submitRating(request)
         );
     }
