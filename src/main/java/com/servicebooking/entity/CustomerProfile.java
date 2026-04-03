@@ -22,7 +22,6 @@ public class CustomerProfile {
 
     private String email;
 
-
     @Lob
     @Column(name = "profile_image_data", columnDefinition = "LONGBLOB")
     private byte[] profileImageData;
