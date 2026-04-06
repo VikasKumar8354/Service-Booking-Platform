@@ -26,7 +26,6 @@ import java.util.Map;
 @SecurityRequirement(name = "bearerAuth")
 public class BookingController {
 
-
     @Autowired
     private BookingService bookingService;
 
