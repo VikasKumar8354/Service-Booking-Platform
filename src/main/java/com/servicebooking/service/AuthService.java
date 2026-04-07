@@ -84,7 +84,6 @@ public class AuthService {
                 providerProfileRepository.save(profile);
             }
         }
-
         return ApiResponse.success("Registered successfully. You can login now.");
     }
 
