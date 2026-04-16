@@ -26,6 +26,7 @@ public class RatingService {
     private ProviderProfileRepository providerProfileRepository;
 
     // ================= SUBMIT =================
+
     @Transactional
     public ApiResponse<RatingResponseDTO> submitRating(Map<String, Object> request) {
 
