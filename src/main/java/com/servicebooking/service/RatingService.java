@@ -27,7 +27,6 @@ public class RatingService {
 
     // ================= SUBMIT =================
 
-
     @Transactional
     public ApiResponse<RatingResponseDTO> submitRating(Map<String, Object> request) {
 
